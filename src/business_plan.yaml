@@ -1,36 +1,40 @@
 project_name: AutoDevSystem Core
 description: Sviluppo del sistema di generazione automatica del codice basato su AI.
-technologies: [Python, GitHub Actions, OpenAI API, YAML]
-
+technologies:
+- Python
+- GitHub Actions
+- OpenAI API
+- YAML
 phases:
-  - name: Setup Iniziale e Test
-    tasks:
-      - description: Crea un file di benvenuto nella root del progetto.
-        type: create_file
-        path: welcome.txt
-        prompt_for_content: Genera un breve messaggio di benvenuto per un sistema di sviluppo automatico.
-        agent: ProjectBot
-        status: pending
-      - description: Configura l'ambiente di sviluppo e testa la comunicazione tra Manager-Bot e Project-Bot.
-        type: info
-        agent: ProjectBot
-        status: completed
-      - description: Implementa la logica di gestione dei branch per i task.
-        type: action
-        agent: ProjectBot
-        status: pending
-
-  - name: Generazione Codice Base
-    tasks:
-      - description: Genera un modulo Python di esempio per la gestione delle stringhe.
-        type: generate_code
-        agent: ProjectBot
-        status: pending
-      - description: Crea un file README.md iniziale per il progetto.
-        type: create_file
-        path: README.md
-        prompt_for_content: "Genera il contenuto di un README.md per un repository chiamato 'AutoDevSystem' che si auto-genera e gestisce lo sviluppo tramite AI. Includi sezioni per Setup, Utilizzo e Funzionalità."
-        agent: ProjectBot
-        status: pending
-
-# Aggiungeremo altre fasi e task in futuro
+- name: Setup Iniziale e Test
+  tasks:
+  - description: Crea un file di benvenuto nella root del progetto.
+    type: create_file
+    path: welcome.txt
+    prompt_for_content: Genera un breve messaggio di benvenuto per un sistema di sviluppo
+      automatico.
+    agent: ProjectBot
+    status: completed
+  - description: Configura l'ambiente di sviluppo e testa la comunicazione tra Manager-Bot
+      e Project-Bot.
+    type: info
+    agent: ProjectBot
+    status: completed
+  - description: Implementa la logica di gestione dei branch per i task.
+    type: action
+    agent: ProjectBot
+    status: pending
+- name: Generazione Codice Base
+  tasks:
+  - description: Genera un modulo Python di esempio per la gestione delle stringhe.
+    type: generate_code
+    agent: ProjectBot
+    status: pending
+  - description: Crea un file README.md iniziale per il progetto.
+    type: create_file
+    path: README.md
+    prompt_for_content: "Genera il contenuto di un README.md per un repository chiamato\
+      \ 'AutoDevSystem' che si auto-genera e gestisce lo sviluppo tramite AI. Includi\
+      \ sezioni per Setup, Utilizzo e Funzionalit\xE0."
+    agent: ProjectBot
+    status: pending
