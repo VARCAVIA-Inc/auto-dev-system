@@ -77,37 +77,29 @@ def commit_and_push_on_new_branch(repo_path, commit_message, base_branch="main",
     try:
         repo = Repo(repo_path)
         
-        # --- INIZIO MODIFICA CRITICA ---
-        # Assicurati di aggiungere tutte le modifiche prima di controllare le differenze
-        repo.git.add(all=True) # Aggiunge tutte le modifiche (nuovi e modificati)
-        print("Tutte le modifiche aggiunte all'indice Git.") # <--- DEBUG PRINT
+        repo.git.add(all=True)
+        print("Tutte le modifiche aggiunte all'indice Git.")
         
-        if not repo.index.diff("HEAD"): # Controlla se ci sono modifiche stageate da committare
+        if not repo.index.diff("HEAD"):
             print("Nessuna modifica stageata da committare. Saltando push e PR.")
-            return True 
-        # --- FINE MODIFICA CRITICA ---
+            return True
 
-        # 1. Crea un nuovo branch basato sul branch corrente (main)
         timestamp = os.getenv('GITHUB_RUN_ID', 'manual')
         new_branch_name = f"{new_branch_prefix}{timestamp}"
         
-        # Per creare il branch dalla HEAD corrente del repo clonato:
         new_local_branch = repo.create_head(new_branch_name)
-        new_local_branch.checkout() # Passa al nuovo branch
+        new_local_branch.checkout()
         
         print(f"Creato e passato al nuovo branch locale: {new_branch_name}")
 
-        # 2. Committa le modifiche (già aggiunte sopra)
         repo.index.commit(commit_message)
         print(f"Modifiche committate sul branch {new_branch_name}.")
 
-        # 3. Push sul nuovo branch
         origin = repo.remote(name='origin')
         print(f"Pushing al branch: {new_branch_name} usando l'autenticazione implicita di GitHub Actions.")
-        origin.push(f"{new_branch_name}:{new_branch_name}") # Push del branch locale al branch remoto con lo stesso nome
+        origin.push(f"{new_branch_name}:{new_branch_name}")
         print(f"Modifiche pushati al branch remoto '{new_branch_name}' con successo.")
 
-        # 4. Apri una Pull Request
         repo_obj = get_repo_obj()
         if not repo_obj:
             print("Errore: Impossibile recuperare l'oggetto repository di PyGithub per creare la PR.")
@@ -157,19 +149,111 @@ def commit_and_push_on_new_branch(repo_path, commit_message, base_branch="main",
 
 # Funzioni principali del Project-Bot
 def generate_response_with_ai(prompt, model="gpt-4o-mini"):
-    # ... (questa funzione rimane uguale) ...
-    pass
+    """
+    Genera una risposta usando l'API di OpenAI.
+    """
+    global _openai_api_key 
+    if not _openai_api_key:
+        print("Errore: OPENAI_API_KEY non configurata per la chiamata AI. Impossibile generare contenuto.")
+        return None
+    
+    print(f"DEBUG: Tentativo di chiamata OpenAI API. Prompt: {prompt[:100]}...") # <--- NUOVO DEBUG
+    
+    try:
+        completion = openai.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": "Sei un assistente AI utile e specializzato nella generazione di codice e contenuti tecnici."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        print("Risposta OpenAI ricevuta.")
+        return completion.choices[0].message.content
+    except openai.AuthenticationError as e: # <--- CATTURA ERRORE DI AUTENTICAZIONE SPECIFICO
+        print(f"Errore di autenticazione OpenAI: {e}. Controlla la OPENAI_API_KEY.")
+        send_email(
+            subject="[AUTO-DEV-SYSTEM] Errore di Autenticazione OpenAI",
+            body=f"Il Project-Bot ha riscontrato un errore di autenticazione con l'API di OpenAI.\nErrore: {e}\nAssicurati che OPENAI_API_KEY sia corretta e valida.",
+            to_email=_receiver_email,
+            sender_email=_sender_email
+        )
+        return None
+    except openai.APICallError as e: # <--- CATTURA ERRORI GENERALI API CALL
+        print(f"Errore durante la chiamata API OpenAI: {e}. Code: {e.code}, Type: {e.type}")
+        send_email(
+            subject="[AUTO-DEV-SYSTEM] Errore API OpenAI",
+            body=f"Il Project-Bot ha riscontrato un errore durante la chiamata API di OpenAI.\nErrore: {e}\nCode: {e.code}, Type: {e.type}",
+            to_email=_receiver_email,
+            sender_email=_sender_email
+        )
+        return None
+    except Exception as e:
+        print(f"Errore generico durante la chiamata OpenAI: {e}. Tipo: {type(e)}") # <--- DEBUG TYPE
+        send_email(
+            subject=f"[AUTO-DEV-SYSTEM] Errore Project-Bot (OpenAI Generico)",
+            body=f"Il Project-Bot ha riscontrato un errore generico durante la chiamata OpenAI.\nErrore: {e}\nTipo: {type(e)}",
+            to_email=_receiver_email,
+            sender_email=_sender_email
+        )
+        return None
 
 def create_file_task(task_details):
-    # ... (questa funzione rimane uguale) ...
-    pass
+    """
+    Gestisce il task di creazione di un file.
+    """
+    print("Inizio funzione create_file_task.")
+    file_path = task_details.get('path')
+    prompt_for_content = task_details.get('prompt_for_content')
+
+    print(f"Dettagli task creazione file: path='{file_path}', prompt_for_content='{prompt_for_content[:50]}...'")
+
+    if not file_path:
+        print("Errore: 'path' non specificato per il task 'create_file'. Restituisco False.")
+        return False
+
+    print(f"Tentativo di creazione file: {file_path}")
+    content = ""
+    if prompt_for_content:
+        print(f"Generando contenuto AI per il file: {file_path}...")
+        try: # <--- AGGIUNTO TRY/EXCEPT QUI
+            ai_generated_content = generate_response_with_ai(prompt_for_content)
+        except Exception as e:
+            print(f"Errore inaspettato durante la chiamata generate_response_with_ai: {e}")
+            ai_generated_content = None # Assicurati che sia None in caso di eccezione inattesa
+        
+        if ai_generated_content:
+            content = ai_generated_content
+        else:
+            print("Impossibile generare contenuto AI. Il file non verrà creato. Restituisco False.")
+            return False
+
+    try:
+        dir_name = os.path.dirname(file_path)
+        if dir_name:
+            os.makedirs(dir_name, exist_ok=True)
+        
+        full_path = os.path.join(get_repo_root(), file_path)
+        print(f"Scrivendo il file completo in: {full_path}")
+        with open(full_path, 'w') as f:
+            f.write(content)
+        print(f"File '{full_path}' creato/aggiornato con successo.")
+        return True
+    except Exception as e:
+        print(f"Errore durante la creazione del file '{file_path}': {e}. Restituisco False.")
+        send_email(
+            subject=f"[AUTO-DEV-SYSTEM] Errore Project-Bot: Creazione file fallita",
+            body=f"Il Project-Bot non è riuscito a creare il file '{file_path}'.\nErrore: {e}",
+            to_email=_receiver_email,
+            sender_email=_sender_email
+        )
+        return False
 
 def update_business_plan_status(task_index, phase_index, new_status="completed"):
     # ... (questa funzione rimane uguale) ...
     pass
 
 def run_project_bot(task_details, task_index, phase_index):
-    # ... (questa funzione rimane uguale, dato che la logica add è stata spostata) ...
+    # ... (il resto di questa funzione rimane uguale) ...
     global _receiver_email, _sender_email 
     task_description = task_details.get('description', 'N/A')
     task_type = task_details.get('type')
@@ -183,7 +267,7 @@ def run_project_bot(task_details, task_index, phase_index):
     # 1. Esegui l'azione del task
     if task_type == 'create_file':
         print("Rilevato task_type 'create_file'. Chiamata create_file_task.")
-        task_completed = create_file_task(task_details)
+        task_completed = create_file_task(task_details) # <-- La logica di successo/fallimento è qui
         if task_completed:
             print("create_file_task completato con successo.")
         else:
