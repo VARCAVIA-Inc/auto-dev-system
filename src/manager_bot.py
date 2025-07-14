@@ -17,9 +17,8 @@ try:
     print(f"Connesso al repository: {repo.full_name}")
 except Exception as e:
     print(f"Errore durante l'inizializzazione di GitHub API: {e}")
-    # Nota: send_email qui potrebbe non funzionare se le variabili non sono passate al modulo email_sender.
-    # Ma in questo caso, è un errore critico di avvio.
-    print(f"Tentativo di invio email di errore (non garantito senza init di email_sender): {e}")
+    # In questo punto, send_email non è ancora garantito che funzioni a causa dell'inizializzazione.
+    # L'Action fallirà comunque con exit(1) che è visibile nel log.
     exit(1) # Termina lo script se non si connette a GitHub
 
 # --- Funzioni del Manager-Bot ---
@@ -27,7 +26,7 @@ except Exception as e:
 def send_initial_status_email():
     """
     Invia un'email per confermare l'avvio del Manager-Bot.
-    Questa funzione non viene più usata in `main()` direttamente, ma può essere utile.
+    Questa funzione non viene più usata in `main()` direttamente, ma può essere utile per notifiche specifiche.
     """
     subject = "[AUTO-DEV-SYSTEM] Manager-Bot Avviato!"
     body = (
@@ -62,6 +61,8 @@ def read_business_plan():
             return plan if plan else {}
         except yaml.YAMLError as exc:
             print(f"Errore durante la lettura del Business Plan: {exc}")
+            # send_email qui dipenderebbe dall'inizializzazione corretta in main(),
+            # ma questo errore farebbe già fallire la pipeline se non gestito.
             send_email(
                 subject="[AUTO-DEV-SYSTEM] Errore: Business Plan non valido",
                 body=f"Il Manager-Bot ha riscontrato un errore nel leggere il file business_plan.yaml.\nErrore: {exc}\nControlla la sintassi YAML.",
@@ -73,9 +74,11 @@ def read_business_plan():
 def main():
     print("Manager-Bot avviato.")
 
-    # Inizializza l'ambiente del Project-Bot e il modulo email_sender
-    # Assicurati di passare anche i parametri per email_sender.py
-    send_email(subject="", body="", to_email="", sender_email="") # Inizializza send_email con valori vuoti per triggerare la lettura delle variabili
+    # Inizializza l'ambiente del Project-Bot e assicura che il modulo email_sender sia pronto
+    # Chiamiamo send_email una volta con parametri validi (presi dall'ambiente) per assicurare inizializzazione SMTP
+    # La riga precedente era vuota, questa userà le env vars per inizializzare il sender
+    send_email("TEST INIT", "Questo e' un test di inizializzazione.", RECEIVER_EMAIL, SENDER_EMAIL) 
+
     init_project_bot_env(OPENAI_API_KEY, RECEIVER_EMAIL, SENDER_EMAIL, GITHUB_TOKEN)
 
     business_plan = read_business_plan()
