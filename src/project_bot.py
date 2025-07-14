@@ -12,7 +12,10 @@ _sender_email = None
 _github_token = None
 
 def init_project_bot_env(openai_api_key, receiver_email, sender_email, github_token):
-    # ... (Questa funzione rimane uguale) ...
+    """
+    Inizializza le variabili d'ambiente per il Project-Bot.
+    Questa funzione deve essere chiamata dal Manager-Bot prima di run_project_bot.
+    """
     global _openai_api_key, _receiver_email, _sender_email, _github_token
     _openai_api_key = openai_api_key
     _receiver_email = receiver_email
@@ -23,11 +26,8 @@ def init_project_bot_env(openai_api_key, receiver_email, sender_email, github_to
 
 
 def get_repo_root():
-    # ... (Questa funzione rimane uguale) ...
+    """Restituisce il percorso della radice del repository."""
     return os.getenv('GITHUB_WORKSPACE', os.getcwd())
-
-# Rimuovi get_repo_obj() e commit_and_push_on_new_branch() e push_trigger_files_to_main() da qui
-# Essi saranno nel nuovo workflow dedicato.
 
 # Questa funzione sarà responsabile del push dei file di trigger
 def push_trigger_files_to_main(repo_path, commit_message):
@@ -268,10 +268,9 @@ def run_project_bot(task_details, task_index, phase_index):
             print("create_file_task ha restituito False (fallimento).")
         commit_message = f"feat: Create file {task_details.get('path', 'unknown')}"
     elif task_type == 'info' or task_type == 'action' or task_type == 'generate_code':
-        # ... (questa parte rimane uguale, ma la chiamata generate_response_with_ai potrebbe ancora avere il problema) ...
         print(f"Rilevato task_type '{task_type}'. Processando via AI prompt.")
         ai_prompt = f"Genera un messaggio per il completamento del seguente task: '{task_description}'."
-        ai_response = generate_response_with_ai(ai_prompt) # Questa riga potrebbe fallire
+        ai_response = generate_response_with_ai(ai_prompt)
         if ai_response:
             print(f"Risposta AI per il task '{task_description}': {ai_response}")
             task_completed = True

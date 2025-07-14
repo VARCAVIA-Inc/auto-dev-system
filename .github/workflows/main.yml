@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths-ignore: # Ignora i push del file di trigger per evitare loop infiniti
+      - '.autodev-trigger'
   workflow_dispatch: # Permette l'esecuzione manuale
   schedule:
     - cron: '0 0 * * *' # Ogni giorno a mezzanotte UTC
@@ -17,8 +19,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        # Rimuoviamo completamente la riga 'token:' che ha causato l'errore.
-        # actions/checkout@v4 usa il GITHUB_TOKEN implicito per default se non specificato.
+        # Non specificare 'token:' qui, userà il GITHUB_TOKEN implicito con i permessi definiti sopra.
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -36,9 +37,9 @@ jobs:
 
       - name: Run Manager Bot
         env:
-          # Passiamo tutti i secret al bot, incluso il BOT_GITHUB_TOKEN
-          # che verrà usato per inizializzare PyGithub client e per i push diretti
-          GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }} # Questo è il tuo PAT esplicito
+          # Passiamo tutti i secret al bot.
+          # GITHUB_TOKEN qui è il tuo PAT esplicito (secrets.BOT_GITHUB_TOKEN).
+          GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
           EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
           EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
           EMAIL_USERNAME: ${{ secrets.EMAIL_USERNAME }}
