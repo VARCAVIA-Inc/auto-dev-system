@@ -67,26 +67,33 @@ def read_business_plan():
 
 def main():
     print("Manager-Bot avviato.")
-    # send_initial_status_email() # Non inviamo più questa email ad ogni avvio, la useremo per notifiche specifiche
 
     business_plan = read_business_plan()
     print(f"Contenuto parziale del Business Plan: {str(business_plan)[:200]}...")
 
     if business_plan and 'project_name' in business_plan and 'phases' in business_plan:
         print("Business Plan valido rilevato. Invocando il Project-Bot per i task...")
-        # Per ora, prendiamo il primo task del primo phase per test
-        if business_plan['phases'] and business_plan['phases'][0]['tasks']:
-            first_task = business_plan['phases'][0]['tasks'][0]['description']
-            print(f"Invocando Project-Bot con il task: {first_task}")
-            run_project_bot(first_task)
-        else:
-            print("Nessun task trovato nel Business Plan. In attesa di istruzioni.")
-            send_email(
-                subject="[AUTO-DEV-SYSTEM] Manager-Bot in attesa",
-                body="Il Manager-Bot ha letto il Business Plan ma non ha trovato task da eseguire. In attesa di istruzioni.",
-                to_email=RECEIVER_EMAIL,
-                sender_email=SENDER_EMAIL
-            )
+        
+        # Iterare attraverso le fasi e i task
+        for phase_index, phase in enumerate(business_plan['phases']):
+            for task_index, task in enumerate(phase.get('tasks', [])):
+                if task.get('agent') == 'ProjectBot' and task.get('status') == 'pending':
+                    print(f"Trovato task pendente per ProjectBot: {task.get('description')}")
+                    # Invoca ProjectBot passando i dettagli del task e gli indici
+                    run_project_bot(task, task_index, phase_index) # <--- MODIFICATO
+                    # Dopo che un task è stato gestito, esci per questa esecuzione.
+                    # Il prossimo trigger del workflow (es. schedule) gestirà il prossimo task.
+                    # Questo previene loop infiniti o eccessive chiamate API in un'unica esecuzione.
+                    print("Un task gestito. Terminando questa esecuzione del Manager-Bot.")
+                    return # Esci dalla funzione main dopo aver gestito un task
+
+        print("Nessun task pendente trovato per ProjectBot.")
+        send_email(
+            subject="[AUTO-DEV-SYSTEM] Manager-Bot in attesa",
+            body="Il Manager-Bot ha scansionato il Business Plan ma non ha trovato task pendenti per il Project-Bot. In attesa di nuove istruzioni.",
+            to_email=RECEIVER_EMAIL,
+            sender_email=SENDER_EMAIL
+        )
     else:
         print("Nessun Business Plan valido o completo trovato. In attesa di istruzioni.")
         send_email(

@@ -5,20 +5,32 @@ technologies: [Python, GitHub Actions, OpenAI API, YAML]
 phases:
   - name: Setup Iniziale e Test
     tasks:
-      - description: Configura l'ambiente di sviluppo e testa la comunicazione tra Manager-Bot e Project-Bot.
+      - description: Crea un file di benvenuto nella root del progetto.
+        type: create_file # <--- NUOVO
+        path: welcome.txt # <--- NUOVO
+        prompt_for_content: Genera un breve messaggio di benvenuto per un sistema di sviluppo automatico. # <--- NUOVO
         agent: ProjectBot
         status: pending
+      - description: Configura l'ambiente di sviluppo e testa la comunicazione tra Manager-Bot e Project-Bot.
+        type: info # <--- AGGIUNTO (tipo generico, non azione diretta per il bot)
+        agent: ProjectBot
+        status: completed # <--- AGGIUNTO (Mark as completed since we did this)
       - description: Implementa la logica di gestione dei branch per i task.
+        type: action # <--- AGGIUNTO (tipo generico)
         agent: ProjectBot
         status: pending
 
   - name: Generazione Codice Base
     tasks:
       - description: Genera un modulo Python di esempio per la gestione delle stringhe.
+        type: generate_code # <--- AGGIUNTO (tipo generico)
         agent: ProjectBot
         status: pending
       - description: Crea un file README.md iniziale per il progetto.
+        type: create_file # <--- AGGIUNTO
+        path: README.md # <--- AGGIUNTO
+        prompt_for_content: "Genera il contenuto di un README.md per un repository chiamato 'AutoDevSystem' che si auto-genera e gestisce lo sviluppo tramite AI. Includi sezioni per Setup, Utilizzo e Funzionalità." # <--- AGGIUNTO
         agent: ProjectBot
         status: pending
 
-  # Aggiungeremo altre fasi e task in futuro
+# Aggiungeremo altre fasi e task in futuro

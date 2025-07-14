@@ -26,7 +26,8 @@ jobs:
           pip install PyYAML
           pip install PyGithub
           pip install secure-smtplib
-          pip install openai # <--- AGGIUNGI QUESTA RIGA
+          pip install openai 
+          pip install GitPython
 
       - name: Run Manager Bot
         env:
