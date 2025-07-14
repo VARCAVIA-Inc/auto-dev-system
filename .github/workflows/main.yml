@@ -11,18 +11,14 @@ on:
 jobs:
   run_manager_bot:
     runs-on: ubuntu-latest
-    permissions: # <--- AGGIUNGI QUESTA SEZIONE
+    permissions: # Permessi espliciti per questo job
       contents: write # Permette al GITHUB_TOKEN di scrivere nel repository
-      pull-requests: write # Permette di creare e gestire Pull Request (per future PR da questo workflow)
+      pull-requests: write # Permette di creare e gestire Pull Request
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          # Usiamo il GITHUB_TOKEN predefinito che ha i permessi di questo job
-          # Non abbiamo bisogno del secrets.BOT_GITHUB_TOKEN qui, a meno che non sia strettamente necessario
-          # per checkout su un repo diverso, ma per push allo stesso repo, GITHUB_TOKEN basta.
-          # token: ${{ secrets.BOT_GITHUB_TOKEN }} # Rimuovi o commenta questa riga se non necessaria
-                                                  # GITHUB_TOKEN è il default se non specificato
+        # Rimuoviamo completamente la riga 'token:' che ha causato l'errore.
+        # actions/checkout@v4 usa il GITHUB_TOKEN implicito per default se non specificato.
 
       - name: Set up Python
         uses: actions/setup-python@v5
