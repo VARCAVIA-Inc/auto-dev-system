@@ -3,13 +3,13 @@ import openai
 from src.utils.email_sender import send_email
 import yaml
 from git import Repo, exc
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import urlparse, urlunparse # Questa riga può rimanere, non danneggia
 
 # Variabili Globali per le credenziali (verranno impostate da init_project_bot_env)
 _openai_api_key = None
 _receiver_email = None
 _sender_email = None
-_github_token = None
+_github_token = None # Questo sarà il GITHUB_TOKEN implicito del workflow
 
 def init_project_bot_env(openai_api_key, receiver_email, sender_email, github_token):
     """
@@ -20,25 +20,23 @@ def init_project_bot_env(openai_api_key, receiver_email, sender_email, github_to
     _openai_api_key = openai_api_key
     _receiver_email = receiver_email
     _sender_email = sender_email
-    _github_token = github_token
+    _github_token = github_token # Salviamo il token (anche se per il push non lo useremo direttamente qui)
     openai.api_key = openai_api_key # Imposta la chiave API di OpenAI per il client
     print("Project-Bot Environment Inizializzato.")
 
 # Funzioni ausiliarie per la gestione del repository Git
 def get_repo_root():
     """Restituisce il percorso della radice del repository."""
-    # In GitHub Actions, GITHUB_WORKSPACE è la radice del repo
     return os.getenv('GITHUB_WORKSPACE', os.getcwd())
 
 def commit_and_push_changes(repo_path, commit_message, file_paths=None):
     """Committa e pusha le modifiche al repository."""
-    global _github_token 
-    if not _github_token:
-        print("Errore: GITHUB_TOKEN non inizializzato per il commit/push. Impossibile pushare.")
-        return False
-
+    # Il _github_token sarà passato, ma il push farà affidamento sull'ambiente di Actions.
+    # Non useremo più il _github_token esplicitamente per impostare l'URL qui.
+    
     print(f"Tentativo di commit e push: '{commit_message}'")
-    print(f"Token usato per push: {'*****' if _github_token else 'Nessun token'}")
+    # Il log del token non è più rilevante qui dato che ci affidiamo all'ambiente
+    # print(f"Token usato per push: {'*****' if _github_token else 'Nessun token'}")
 
     try:
         repo = Repo(repo_path)
@@ -55,25 +53,17 @@ def commit_and_push_changes(repo_path, commit_message, file_paths=None):
 
         repo.index.commit(commit_message)
         
-        # Ottieni l'URL remoto e aggiungi il token per l'autenticazione
+        # --- INIZIO MODIFICA CRITICA: Semplificazione del push ---
+        # NON impostiamo più l'URL remoto con il token esplicito.
+        # Ci affidiamo al fatto che actions/checkout@v4 configura Git per usare GITHUB_TOKEN implicito.
         origin = repo.remote(name='origin')
-        original_url = origin.url
-        parsed_url = urlparse(original_url)
         
-        # Ricostruisci l'URL con il token, assicurandosi di mantenere il dominio
-        netloc_part = parsed_url.netloc.split('@', 1)[-1] if '@' in parsed_url.netloc else parsed_url.netloc
-        auth_url = urlunparse(parsed_url._replace(netloc=f"oauth2:{_github_token}@{netloc_part}"))
-        
-        print(f"Tentativo di impostare URL remoto: {auth_url.replace(_github_token, '*****')}")
-        repo.git.remote('set-url', 'origin', auth_url)
-        
-        # PUSHA
         current_branch = repo.active_branch.name
-        print(f"Pushing al branch: {current_branch}")
-        origin.push(current_branch)
+        print(f"Pushing al branch: {current_branch} usando l'autenticazione implicita di GitHub Actions.")
+        origin.push(current_branch) # Questo dovrebbe usare il GITHUB_TOKEN del workflow
         
-        # Ripristina l'URL originale del remote per non lasciare il token memorizzato (anche se è effimero in Action)
-        repo.git.remote('set-url', 'origin', original_url)
+        # Non è necessario ripristinare l'URL, dato che non lo abbiamo modificato.
+        # --- FINE MODIFICA CRITICA ---
         
         print(f"Modifiche committate e pushati al branch '{current_branch}' con successo.")
         return True
@@ -107,7 +97,6 @@ def generate_response_with_ai(prompt, model="gpt-4o-mini"):
         return None
     print(f"Chiamata OpenAI API con prompt: {prompt[:100]}...")
     try:
-        # Assumi che openai.api_key sia già impostata da init_project_bot_env
         completion = openai.chat.completions.create(
             model=model,
             messages=[
@@ -155,11 +144,10 @@ def create_file_task(task_details):
         if ai_generated_content:
             content = ai_generated_content
         else:
-            print("Impossibile generare contenuto AI. Il file non verrà creato.") # Aggiornato messaggio
-            return False # Fallisce se la generazione AI fallisce e il contenuto era richiesto
+            print("Impossibile generare contenuto AI. Il file non verrà creato.")
+            return False
 
     try:
-        # Crea le directory se non esistono. Gestisce il caso di file nella root.
         dir_name = os.path.dirname(file_path)
         if dir_name:
             os.makedirs(dir_name, exist_ok=True)
@@ -205,7 +193,6 @@ def update_business_plan_status(task_index, phase_index, new_status="completed")
             print(f"Stato del task {task_index} nella fase {phase_index} aggiornato a '{new_status}'.")
 
             commit_message = f"chore: Update business plan - task {task_index} in phase {phase_index} set to {new_status}"
-            # Il commit_and_push_changes gestirà l'aggiunta specifica del file
             return commit_and_push_changes(repo_root, commit_message, file_paths=[business_plan_path])
         else:
             print("Avviso: Impossibile trovare il task da aggiornare nel Business Plan.")
@@ -237,7 +224,6 @@ def run_project_bot(task_details, task_index, phase_index):
     if task_type == 'create_file':
         task_completed = create_file_task(task_details)
     elif task_type == 'info' or task_type == 'action' or task_type == 'generate_code':
-        # Per ora, questi tipi sono solo log (simulazione)
         ai_prompt = f"Genera un messaggio per il completamento del seguente task: '{task_description}'."
         ai_response = generate_response_with_ai(ai_prompt)
         if ai_response:
@@ -301,18 +287,4 @@ def run_project_bot(task_details, task_index, phase_index):
     print("Fine esecuzione run_project_bot.")
 
 if __name__ == "__main__":
-    # In un ambiente di test diretto, potresti impostare queste variabili per i test
-    # os.environ["OPENAI_API_KEY"] = "sk-..." # SOLO PER TEST LOCALE
-    # os.environ["RECEIVER_EMAIL"] = "code@varcavia.com"
-    # os.environ["SENDER_EMAIL"] = "workspace@varcavia.com"
-    # os.environ["GITHUB_TOKEN"] = "github_pat_..." # SOLO PER TEST LOCALE
-
-    # init_project_bot_env(
-    #     os.getenv("OPENAI_API_KEY"),
-    #     os.getenv("RECEIVER_EMAIL"),
-    #     os.getenv("SENDER_EMAIL"),
-    #     os.getenv("GITHUB_TOKEN")
-    # )
-    # print("Esecuzione diretta del Project-Bot (solo per test).")
-    # run_project_bot({"description": "Crea una funzione Python per calcolare il fattoriale di un numero.", "type": "generate_code"}, 0, 0)
-    pass
+    pass # Non usiamo più il blocco di test diretto qui.

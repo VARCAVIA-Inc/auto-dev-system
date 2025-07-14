@@ -17,8 +17,7 @@ try:
     print(f"Connesso al repository: {repo.full_name}")
 except Exception as e:
     print(f"Errore durante l'inizializzazione di GitHub API: {e}")
-    # In questo punto, send_email non è ancora garantito che funzioni a causa dell'inizializzazione.
-    # L'Action fallirà comunque con exit(1) che è visibile nel log.
+    print(f"Tentativo di invio email di errore (non garantito senza init di email_sender): {e}")
     exit(1) # Termina lo script se non si connette a GitHub
 
 # --- Funzioni del Manager-Bot ---
@@ -61,8 +60,6 @@ def read_business_plan():
             return plan if plan else {}
         except yaml.YAMLError as exc:
             print(f"Errore durante la lettura del Business Plan: {exc}")
-            # send_email qui dipenderebbe dall'inizializzazione corretta in main(),
-            # ma questo errore farebbe già fallire la pipeline se non gestito.
             send_email(
                 subject="[AUTO-DEV-SYSTEM] Errore: Business Plan non valido",
                 body=f"Il Manager-Bot ha riscontrato un errore nel leggere il file business_plan.yaml.\nErrore: {exc}\nControlla la sintassi YAML.",
@@ -75,8 +72,6 @@ def main():
     print("Manager-Bot avviato.")
 
     # Inizializza l'ambiente del Project-Bot e assicura che il modulo email_sender sia pronto
-    # Chiamiamo send_email una volta con parametri validi (presi dall'ambiente) per assicurare inizializzazione SMTP
-    # La riga precedente era vuota, questa userà le env vars per inizializzare il sender
     send_email("TEST INIT", "Questo e' un test di inizializzazione.", RECEIVER_EMAIL, SENDER_EMAIL) 
 
     init_project_bot_env(OPENAI_API_KEY, RECEIVER_EMAIL, SENDER_EMAIL, GITHUB_TOKEN)
