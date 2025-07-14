@@ -18,13 +18,13 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9' # Usiamo Python 3.9, puoi scegliere 3.10, 3.11, etc.
+          python-version: '3.9'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install PyYAML # Per leggere il business plan
-          pip install GitPython # Per interagire con Git (creare branch, etc.)
+          pip install PyGithub # <--- QUI È LA CORREZIONE: DA GITPYTHON A PYGITHUB
           pip install secure-smtplib # Per l'invio email sicuro
 
       - name: Run Manager Bot
