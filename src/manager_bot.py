@@ -1,36 +1,31 @@
 import os
-import yaml # Per leggere il Business Plan
-from github import Github # Per interagire con GitHub API
-from src.utils.email_sender import send_email # Il nostro modulo per l'email
+import yaml
+from github import Github
+from src.utils.email_sender import send_email
+from src.project_bot import run_project_bot # <--- AGGIUNGI QUESTA RIGA
 
 # --- Inizializzazione ---
-# Recupera le variabili d'ambiente (i Secret di GitHub)
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 RECEIVER_EMAIL = os.getenv("RECEIVER_EMAIL")
 SENDER_EMAIL = os.getenv("SENDER_EMAIL")
 
-# Inizializza il client GitHub
 try:
     g = Github(GITHUB_TOKEN)
-    repo = g.get_repo(os.getenv("GITHUB_REPOSITORY")) # Recupera il repo corrente
+    repo = g.get_repo(os.getenv("GITHUB_REPOSITORY"))
     print(f"Connesso al repository: {repo.full_name}")
 except Exception as e:
     print(f"Errore durante l'inizializzazione di GitHub API: {e}")
-    # Invia un'email di errore se la connessione GitHub fallisce
     send_email(
         subject="[AUTO-DEV-SYSTEM] Errore critico: GitHub API non inizializzata",
         body=f"Il Manager-Bot non è riuscito a connettersi all'API di GitHub.\nErrore: {e}\nAssicurati che BOT_GITHUB_TOKEN sia corretto e con i permessi necessari.",
         to_email=RECEIVER_EMAIL,
         sender_email=SENDER_EMAIL
     )
-    exit(1) # Termina lo script se non si connette a GitHub
+    exit(1)
 
 # --- Funzioni del Manager-Bot ---
 
 def send_initial_status_email():
-    """
-    Invia un'email per confermare l'avvio del Manager-Bot.
-    """
     subject = "[AUTO-DEV-SYSTEM] Manager-Bot Avviato!"
     body = (
         f"Ciao {RECEIVER_EMAIL},\n\n"
@@ -47,22 +42,12 @@ def send_initial_status_email():
         print("Impossibile inviare l'email di stato iniziale.")
 
 def read_business_plan():
-    """
-    Legge il file business_plan.yaml.
-    """
     business_plan_path = 'src/business_plan.yaml'
     if not os.path.exists(business_plan_path):
         print(f"Avviso: Il Business Plan non trovato in {business_plan_path}. Creazione di un file vuoto.")
+        # Il contenuto di esempio verrà aggiunto nel prossimo passo, qui lo lasciamo vuoto per non sovrascrivere
         with open(business_plan_path, 'w') as f:
             f.write("# Questo file conterrà il Business Plan per il tuo progetto.\n")
-            f.write("# Verrà letto e interpretato dai bot per generare il codice.\n")
-            f.write("# Esempio:\n")
-            f.write("# project_name: MyAwesomeApp\n")
-            f.write("# phases:\n")
-            f.write("#   - name: Setup\n")
-            f.write("#     tasks:\n")
-            f.write("#       - description: Initialize project structure\n")
-            f.write("#         agent: ProjectBot\n")
         return {}
     
     with open(business_plan_path, 'r') as file:
@@ -82,17 +67,34 @@ def read_business_plan():
 
 def main():
     print("Manager-Bot avviato.")
-    send_initial_status_email()
-    business_plan = read_business_plan()
-    print(f"Contenuto parziale del Business Plan: {str(business_plan)[:200]}...") # Mostra un estratto
+    # send_initial_status_email() # Non inviamo più questa email ad ogni avvio, la useremo per notifiche specifiche
 
-    # --- Qui verrà la logica più complessa ---
-    # Per ora, solo un placeholder.
-    # Il ProjectBot verrà invocato da qui in futuro per iniziare lo sviluppo.
-    # Es: if 'project_name' in business_plan:
-    #         # Invocare ProjectBot
-    # else:
-    #         send_email("Manager-Bot in attesa", "Nessun Business Plan valido trovato. In attesa di istruzioni.", RECEIVER_EMAIL, SENDER_EMAIL)
+    business_plan = read_business_plan()
+    print(f"Contenuto parziale del Business Plan: {str(business_plan)[:200]}...")
+
+    if business_plan and 'project_name' in business_plan and 'phases' in business_plan:
+        print("Business Plan valido rilevato. Invocando il Project-Bot per i task...")
+        # Per ora, prendiamo il primo task del primo phase per test
+        if business_plan['phases'] and business_plan['phases'][0]['tasks']:
+            first_task = business_plan['phases'][0]['tasks'][0]['description']
+            print(f"Invocando Project-Bot con il task: {first_task}")
+            run_project_bot(first_task)
+        else:
+            print("Nessun task trovato nel Business Plan. In attesa di istruzioni.")
+            send_email(
+                subject="[AUTO-DEV-SYSTEM] Manager-Bot in attesa",
+                body="Il Manager-Bot ha letto il Business Plan ma non ha trovato task da eseguire. In attesa di istruzioni.",
+                to_email=RECEIVER_EMAIL,
+                sender_email=SENDER_EMAIL
+            )
+    else:
+        print("Nessun Business Plan valido o completo trovato. In attesa di istruzioni.")
+        send_email(
+            subject="[AUTO-DEV-SYSTEM] Manager-Bot in attesa",
+            body="Il Manager-Bot non ha trovato un Business Plan valido o completo. In attesa di istruzioni.",
+            to_email=RECEIVER_EMAIL,
+            sender_email=SENDER_EMAIL
+        )
 
     print("Manager-Bot completato per questa esecuzione.")
 

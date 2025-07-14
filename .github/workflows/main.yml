@@ -26,6 +26,7 @@ jobs:
           pip install PyYAML
           pip install PyGithub
           pip install secure-smtplib
+          pip install openai # <--- AGGIUNGI QUESTA RIGA
 
       - name: Run Manager Bot
         env:
@@ -36,6 +37,7 @@ jobs:
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           RECEIVER_EMAIL: ${{ secrets.RECEIVER_EMAIL }}
           SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
-          PYTHONPATH: ${{ github.workspace }} # <--- AGGIUNGI QUESTA RIGA
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }} # <--- AGGIUNGI QUESTA RIGA
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           python src/manager_bot.py

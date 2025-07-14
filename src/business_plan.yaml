@@ -1,32 +1,24 @@
-# Questo file conterrà il Business Plan per il tuo progetto.
-# Verrà letto e interpretato dai bot per generare il codice.
-# Esempio di struttura futura:
-# project_name: MyAwesomeAutogenApp
-# description: An application to manage project tasks automatically.
-# technologies: [Python, Flask, SQLite, GitHub API]
-# phases:
-#   - name: Initial Setup
-#     tasks:
-#       - description: Create base Flask app structure
-#         agent: ProjectBot
-#         details:
-#           - file: app.py
-#             content: "from flask import Flask\napp = Flask(__name__)\n@app.route('/')\ndef hello():\n    return 'Hello, AutoGen!'"
-#           - folder: templates
-#           - folder: static
-#   - name: Database Integration
-#     tasks:
-#       - description: Setup SQLite database and models
-#         agent: ProjectBot
-#         details:
-#           - file: database.py
-#             content: "import sqlite3..."
-#   - name: API Endpoints
-#     tasks:
-#       - description: Implement REST API for tasks
-#         agent: ProjectBot
-#         details:
-#           - file: routes.py
-#             content: "...API routes..."
-#
-# E così via per ogni fase e task.
+project_name: AutoDevSystem Core
+description: Sviluppo del sistema di generazione automatica del codice basato su AI.
+technologies: [Python, GitHub Actions, OpenAI API, YAML]
+
+phases:
+  - name: Setup Iniziale e Test
+    tasks:
+      - description: Configura l'ambiente di sviluppo e testa la comunicazione tra Manager-Bot e Project-Bot.
+        agent: ProjectBot
+        status: pending
+      - description: Implementa la logica di gestione dei branch per i task.
+        agent: ProjectBot
+        status: pending
+
+  - name: Generazione Codice Base
+    tasks:
+      - description: Genera un modulo Python di esempio per la gestione delle stringhe.
+        agent: ProjectBot
+        status: pending
+      - description: Crea un file README.md iniziale per il progetto.
+        agent: ProjectBot
+        status: pending
+
+  # Aggiungeremo altre fasi e task in futuro
