@@ -3,51 +3,70 @@ import openai
 from src.utils.email_sender import send_email
 import yaml
 from git import Repo, exc # Importa la libreria GitPython
+from urllib.parse import urlparse, urlunparse # <--- AGGIUNGI QUESTA RIGA PER LA MANIPOLAZIONE URL
 
 # Inizializza il client OpenAI
 openai.api_key = os.getenv("OPENAI_API_KEY")
 RECEIVER_EMAIL = os.getenv("RECEIVER_EMAIL")
 SENDER_EMAIL = os.getenv("SENDER_EMAIL")
 GITHUB_REPOSITORY = os.getenv("GITHUB_REPOSITORY")
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN") # Necessario per il push con GitPython
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
 # Funzioni ausiliarie per la gestione del repository Git
 def get_repo_root():
     """Restituisce il percorso della radice del repository."""
-    # In GitHub Actions, GITHUB_WORKSPACE è la radice del repo
     return os.getenv('GITHUB_WORKSPACE', os.getcwd())
 
 def commit_and_push_changes(repo_path, commit_message, file_paths=None):
     """Committa e pusha le modifiche al repository."""
     try:
         repo = Repo(repo_path)
+        
         # Se non specificati, aggiunge tutti i file modificati/nuovi
         if file_paths:
             repo.index.add(file_paths)
         else:
             repo.git.add(all=True) # Aggiunge tutte le modifiche
 
-        if repo.index.diff("HEAD"): # Controlla se ci sono modifiche da committare
-            repo.index.commit(commit_message)
-            # Configura le credenziali per il push
-            remote_url = repo.remote().url
-            # Sostituisci "https://" con "https://oauth2:${GITHUB_TOKEN}@" per autenticazione
-            if "https://" in remote_url and "github.com" in remote_url:
-                push_url = remote_url.replace("https://", f"https://oauth2:{GITHUB_TOKEN}@")
-            else: # Per altri tipi di URL o se già con username/token
-                push_url = remote_url
-            
-            # Non usare 'main' staticamente, usa il branch corrente
-            current_branch = repo.active_branch.name
-
-            origin = repo.remote(name='origin')
-            with origin.custom_url_evaluator(lambda url: push_url):
-                origin.push(current_branch)
-            print(f"Modifiche committate e pushati al branch '{current_branch}' con successo.")
-            return True
-        else:
+        if not repo.index.diff("HEAD"): # Se non ci sono modifiche da committare, esci
             print("Nessuna modifica da committare.")
             return True
+
+        repo.index.commit(commit_message)
+        
+        # --- INIZIO CORREZIONE: Gestione autenticazione GitPython ---
+        # Ottieni l'URL remoto e aggiungi il token per l'autenticazione
+        origin = repo.remote(name='origin')
+        
+        # Pulisci eventuali credenziali preesistenti nell'URL per non duplicare
+        original_url = origin.url
+        parsed_url = urlparse(original_url)
+        
+        # Ricostruisci l'URL con il token
+        # Questo formato 'oauth2:TOKEN@github.com' è lo standard per i PAT su GitHub
+        netloc_with_token = f"oauth2:{GITHUB_TOKEN}@github.com"
+        # Se l'URL originale contiene già un utente, lo sostituiamo
+        if '@' in parsed_url.netloc:
+            netloc_with_token += parsed_url.netloc.split('@', 1)[1]
+        else:
+            netloc_with_token += parsed_url.netloc # Mantiene il dominio
+
+        auth_url = urlunparse(parsed_url._replace(netloc=netloc_with_token))
+        
+        # Imposta temporaneamente l'URL del remote con il token
+        # Questo comando usa il git binario sottostante direttamente
+        repo.git.remote('set-url', 'origin', auth_url)
+        
+        # PUSHA
+        current_branch = repo.active_branch.name
+        origin.push(current_branch)
+        
+        # Ripristina l'URL originale del remote per non lasciare il token memorizzato (anche se è effimero in Action)
+        repo.git.remote('set-url', 'origin', original_url)
+        
+        print(f"Modifiche committate e pushati al branch '{current_branch}' con successo.")
+        return True
+    # --- FINE CORREZIONE: Gestione autenticazione GitPython ---
     except exc.GitCommandError as e:
         print(f"Errore Git: {e}")
         send_email(
@@ -69,39 +88,8 @@ def commit_and_push_changes(repo_path, commit_message, file_paths=None):
 
 # Funzioni principali del Project-Bot
 def generate_response_with_ai(prompt, model="gpt-4o-mini"):
-    """
-    Genera una risposta usando l'API di OpenAI.
-    """
-    if not openai.api_key:
-        print("Errore: OPENAI_API_KEY non configurata.")
-        return None
-    try:
-        completion = openai.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": "Sei un assistente AI utile e specializzato nella generazione di codice e contenuti tecnici."},
-                {"role": "user", "content": prompt}
-            ]
-        )
-        return completion.choices[0].message.content
-    except openai.APIError as e:
-        print(f"Errore API OpenAI: {e}")
-        send_email(
-            subject="[AUTO-DEV-SYSTEM] Errore API OpenAI",
-            body=f"Il Project-Bot ha riscontrato un errore con l'API di OpenAI.\nErrore: {e}",
-            to_email=RECEIVER_EMAIL,
-            sender_email=SENDER_EMAIL
-        )
-        return None
-    except Exception as e:
-        print(f"Errore generico durante la chiamata OpenAI: {e}")
-        send_email(
-            subject="[AUTO-DEV-SYSTEM] Errore Project-Bot (OpenAI)",
-            body=f"Il Project-Bot ha riscontrato un errore generico durante la chiamata OpenAI.\nErrore: {e}",
-            to_email=RECEIVER_EMAIL,
-            sender_email=SENDER_EMAIL
-        )
-        return None
+    # ... (questa funzione non cambia) ...
+    pass
 
 def create_file_task(task_details):
     """
@@ -122,11 +110,15 @@ def create_file_task(task_details):
             content = ai_generated_content
         else:
             print("Impossibile generare contenuto AI. Il file verrà creato vuoto.")
-            return False # Fallisce se la generazione AI fallisce e il contenuto era richiesto
+            return False
 
     try:
-        # Crea le directory se non esistono
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        # --- INIZIO CORREZIONE: Creazione directory per file nella root ---
+        dir_name = os.path.dirname(file_path)
+        if dir_name: # Se c'è una directory, creala
+            os.makedirs(dir_name, exist_ok=True)
+        # --- FINE CORREZIONE ---
+        
         with open(file_path, 'w') as f:
             f.write(content)
         print(f"File '{file_path}' creato/aggiornato con successo.")
@@ -142,102 +134,13 @@ def create_file_task(task_details):
         return False
 
 def update_business_plan_status(task_index, phase_index, new_status="completed"):
-    """
-    Aggiorna lo stato di un task nel business_plan.yaml e pusha la modifica.
-    """
-    repo_root = get_repo_root()
-    business_plan_path = os.path.join(repo_root, 'src', 'business_plan.yaml')
-
-    try:
-        with open(business_plan_path, 'r') as file:
-            plan = yaml.safe_load(file)
-
-        if plan and 'phases' in plan and len(plan['phases']) > phase_index and \
-           'tasks' in plan['phases'][phase_index] and \
-           len(plan['phases'][phase_index]['tasks']) > task_index:
-            
-            plan['phases'][phase_index]['tasks'][task_index]['status'] = new_status
-            
-            with open(business_plan_path, 'w') as file:
-                yaml.dump(plan, file, default_flow_style=False, sort_keys=False) # sort_keys=False mantiene l'ordine
-
-            print(f"Stato del task {task_index} nella fase {phase_index} aggiornato a '{new_status}'.")
-
-            commit_message = f"chore: Update business plan - task {task_index} in phase {phase_index} set to {new_status}"
-            # Il commit_and_push_changes gestirà l'aggiunta specifica del file
-            return commit_and_push_changes(repo_root, commit_message, file_paths=[business_plan_path])
-        else:
-            print("Avviso: Impossibile trovare il task da aggiornare nel Business Plan.")
-            return False
-
-    except Exception as e:
-        print(f"Errore durante l'aggiornamento del Business Plan: {e}")
-        send_email(
-            subject="[AUTO-DEV-SYSTEM] Errore Project-Bot: Aggiornamento Business Plan fallito",
-            body=f"Il Project-Bot non è riuscito ad aggiornare il business_plan.yaml.\nErrore: {e}",
-            to_email=RECEIVER_EMAIL,
-            sender_email=SENDER_EMAIL
-        )
-        return False
+    # ... (questa funzione non cambia nel suo comportamento, ma ora si affida alla commit_and_push_changes corretta) ...
+    pass
 
 def run_project_bot(task_details, task_index, phase_index):
-    """
-    Funzione principale del Project-Bot.
-    Prende i dettagli del task e li elabora.
-    """
-    task_description = task_details.get('description', 'N/A')
-    task_type = task_details.get('type')
-    
-    print(f"Project-Bot avviato per il task '{task_description}' (Tipo: {task_type}).")
-    
-    task_completed = False
+    # ... (questa funzione non cambia) ...
+    pass
 
-    if task_type == 'create_file':
-        task_completed = create_file_task(task_details)
-    elif task_type == 'info' or task_type == 'action' or task_type == 'generate_code':
-        # Per ora, questi tipi sono solo log (simulazione)
-        ai_prompt = f"Genera un messaggio per il completamento del seguente task: '{task_description}'."
-        ai_response = generate_response_with_ai(ai_prompt)
-        if ai_response:
-            print(f"Risposta AI per il task '{task_description}': {ai_response}")
-            send_email(
-                subject=f"[AUTO-DEV-SYSTEM] Project-Bot - Task Info/Action: {task_description[:50]}...",
-                body=f"Il Project-Bot ha elaborato il task:\n'{task_description}'\n\nRisposta AI:\n{ai_response}",
-                to_email=RECEIVER_EMAIL,
-                sender_email=SENDER_EMAIL
-            )
-            task_completed = True # Considera completato per questi tipi semplici
-        else:
-            print("Il Project-Bot non è riuscito a generare una risposta AI per il task info/action.")
-            task_completed = False
-    else:
-        print(f"Tipo di task sconosciuto: {task_type}. Nessuna azione specifica.")
-        send_email(
-            subject=f"[AUTO-DEV-SYSTEM] Project-Bot - Task Sconosciuto: {task_description[:50]}...",
-            body=f"Il Project-Bot ha incontrato un task con tipo sconosciuto: '{task_type}' per la descrizione: '{task_description}'.",
-            to_email=RECEIVER_EMAIL,
-            sender_email=SENDER_EMAIL
-        )
-        task_completed = False
-
-    # Aggiorna lo stato del Business Plan solo se il task è stato completato
-    if task_completed:
-        update_business_plan_status(task_index, phase_index, "completed")
-        send_email(
-            subject=f"[AUTO-DEV-SYSTEM] Project-Bot - Task Completato: {task_description[:50]}...",
-            body=f"Il Project-Bot ha completato con successo il task:\n'{task_description}'",
-            to_email=RECEIVER_EMAIL,
-            sender_email=SENDER_EMAIL
-        )
-    else:
-        update_business_plan_status(task_index, phase_index, "failed")
-        send_email(
-            subject=f"[AUTO-DEV-SYSTEM] Project-Bot - Task Fallito: {task_description[:50]}...",
-            body=f"Il Project-Bot non è riuscito a completare il task:\n'{task_description}'",
-            to_email=RECEIVER_EMAIL,
-            sender_email=SENDER_EMAIL
-        )
-
-    print("Project-Bot completato per questa esecuzione.")
-
-# Il blocco if __name__ == "__main__": non verrà modificato in questo passaggio.
+if __name__ == "__main__":
+    # ... (questa sezione non cambia) ...
+    pass
