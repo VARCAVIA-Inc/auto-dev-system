@@ -11,9 +11,18 @@ on:
 jobs:
   run_manager_bot:
     runs-on: ubuntu-latest
+    permissions: # <--- AGGIUNGI QUESTA SEZIONE
+      contents: write # Permette al GITHUB_TOKEN di scrivere nel repository
+      pull-requests: write # Permette di creare e gestire Pull Request (per future PR da questo workflow)
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # Usiamo il GITHUB_TOKEN predefinito che ha i permessi di questo job
+          # Non abbiamo bisogno del secrets.BOT_GITHUB_TOKEN qui, a meno che non sia strettamente necessario
+          # per checkout su un repo diverso, ma per push allo stesso repo, GITHUB_TOKEN basta.
+          # token: ${{ secrets.BOT_GITHUB_TOKEN }} # Rimuovi o commenta questa riga se non necessaria
+                                                  # GITHUB_TOKEN è il default se non specificato
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -31,14 +40,16 @@ jobs:
 
       - name: Run Manager Bot
         env:
-          GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
+          # Passiamo tutti i secret al bot, incluso il BOT_GITHUB_TOKEN
+          # che verrà usato per inizializzare PyGithub client e per i push diretti
+          GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }} # Questo è il tuo PAT esplicito
           EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
           EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
           EMAIL_USERNAME: ${{ secrets.EMAIL_USERNAME }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           RECEIVER_EMAIL: ${{ secrets.RECEIVER_EMAIL }}
           SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }} # <--- AGGIUNGI QUESTA RIGA
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           PYTHONPATH: ${{ github.workspace }}
         run: |
           python src/manager_bot.py
