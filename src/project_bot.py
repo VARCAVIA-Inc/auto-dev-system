@@ -3,15 +3,15 @@ import openai
 from src.utils.email_sender import send_email
 import yaml
 from git import Repo, exc
-from github import Github as PyGithubClient # Rinominato per evitare conflitto con GitPython Repo
+from github import Github as PyGithubClient
 from urllib.parse import urlparse, urlunparse
 
 # Variabili Globali per le credenziali (verranno impostate da init_project_bot_env)
 _openai_api_key = None
 _receiver_email = None
 _sender_email = None
-_github_token = None # Questo sarà il GITHUB_TOKEN implicito del workflow
-_github_api_client = None # Aggiunto client per PyGithub
+_github_token = None
+_github_api_client = None
 
 def init_project_bot_env(openai_api_key, receiver_email, sender_email, github_token):
     """
@@ -53,7 +53,12 @@ def get_repo_obj():
         print("Errore: Client PyGithub non inizializzato.")
         return None
     try:
-        return _github_api_client.get_repo(os.getenv("GITHUB_REPOSITORY"))
+        # Recupera il nome completo del repository dall'ambiente di GitHub Actions
+        repo_name = os.getenv("GITHUB_REPOSITORY") 
+        if not repo_name:
+            print("Errore: GITHUB_REPOSITORY non impostato.")
+            return None
+        return _github_api_client.get_repo(repo_name)
     except Exception as e:
         print(f"Errore nel recupero dell'oggetto repository di PyGithub: {e}")
         return None
@@ -65,25 +70,44 @@ def commit_and_push_on_new_branch(repo_path, commit_message, base_branch="main",
     global _github_token, _github_api_client, _receiver_email, _sender_email
     
     if not _github_token or not _github_api_client:
-        print("Errore: Credenziali GitHub non inizializzate per commit/push/PR.")
+        print("Errore: Credenziali GitHub non inizializzate per commit/push/PR. Impossibile procedere.")
         return False
+
+    print(f"Tentativo di commit e push: '{commit_message}'")
+    # Il log del token non è più rilevante qui dato che ci affidiamo all'ambiente
+    # print(f"Token usato per push: {'*****' if _github_token else 'Nessun token'}")
 
     try:
         repo = Repo(repo_path)
         
         if not repo.index.diff("HEAD"): # Controlla se ci sono modifiche da committare
-            print("Nessuna modifica da committare.")
+            print("Nessuna modifica da committare. Saltando push e PR.")
             return True # Non ci sono modifiche da pushare, considera l'azione successa
 
         # 1. Crea un nuovo branch basato sul branch corrente (main)
+        # Assicurati di essere sul branch base prima di creare il nuovo branch
+        # `repo.git.checkout(base_branch)` potrebbe fallire se non è già sul base_branch
+        # O se ci sono modifiche locali non committate.
+        # È più sicuro usare `git checkout -b` o PyGithub per creare il branch remoto.
+        
+        # Per semplicità e robustezza, facciamo checkout del branch esistente o creiamolo localmente
+        # e poi lo pushiamo.
+
+        # Genera un nome di branch unico
         timestamp = os.getenv('GITHUB_RUN_ID', 'manual') # Usa Run ID per unicità
         new_branch_name = f"{new_branch_prefix}{timestamp}"
+
+        # Crea un nuovo branch locale basato sul branch corrente
+        current_active_branch = repo.active_branch.name
+        if current_active_branch != base_branch:
+             print(f"Attenzione: Non sul branch base '{base_branch}'. Il branch corrente è '{current_active_branch}'.")
+             # Potremmo fare checkout base_branch o gestire in altro modo
+             # Per questo contesto, assumiamo che siamo sul branch da cui vogliamo diramare
         
-        # Assicurati di essere sul branch base prima di creare il nuovo branch
-        repo.git.checkout(base_branch)
-        new_branch = repo.create_head(new_branch_name)
-        new_branch.checkout()
-        print(f"Creato e passato al nuovo branch: {new_branch_name}")
+        new_local_branch = repo.create_head(new_branch_name)
+        new_local_branch.checkout() # Passa al nuovo branch
+
+        print(f"Creato e passato al nuovo branch locale: {new_branch_name}")
 
         # 2. Aggiungi e committa le modifiche
         repo.git.add(all=True) # Aggiunge tutte le modifiche
@@ -94,16 +118,16 @@ def commit_and_push_on_new_branch(repo_path, commit_message, base_branch="main",
         # Ci affidiamo al fatto che actions/checkout@v4 configura Git per usare GITHUB_TOKEN implicito.
         origin = repo.remote(name='origin')
         print(f"Pushing al branch: {new_branch_name} usando l'autenticazione implicita di GitHub Actions.")
-        origin.push(new_branch_name)
-        print(f"Modifiche pushati al branch '{new_branch_name}' con successo.")
+        origin.push(f"{new_branch_name}:{new_branch_name}") # Push del branch locale al branch remoto con lo stesso nome
+        print(f"Modifiche pushati al branch remoto '{new_branch_name}' con successo.")
 
         # 4. Apri una Pull Request
         repo_obj = get_repo_obj()
         if not repo_obj:
             print("Errore: Impossibile recuperare l'oggetto repository di PyGithub per creare la PR.")
             send_email(
-                subject=f"[AUTO-DEV-SYSTEM] Avviso: PR non creata",
-                body=f"Il Project-Bot ha completato il task e pushato le modifiche al branch '{new_branch_name}', ma non è riuscito a creare la Pull Request.",
+                subject=f"[AUTO-DEV-SYSTEM] Avviso: PR non creata (Project-Bot)",
+                body=f"Il Project-Bot ha completato il task e pushato le modifiche al branch '{new_branch_name}', ma non è riuscito a creare la Pull Request a causa di un problema con l'accesso all'API del repository.",
                 to_email=_receiver_email,
                 sender_email=_sender_email
             )
@@ -130,7 +154,7 @@ def commit_and_push_on_new_branch(repo_path, commit_message, base_branch="main",
         print(f"Errore Git nel commit_and_push_on_new_branch: {e}")
         send_email(
             subject=f"[AUTO-DEV-SYSTEM] Errore Git nel Project-Bot (Branch/PR)",
-            body=f"Il Project-Bot ha riscontrato un errore Git durante la creazione del branch, commit o push, o PR.\nErrore: {e}\nMessaggio: {commit_message}",
+            body=f"Il Project-Bot ha riscontrato un errore Git durante la creazione del branch, commit o push.\nErrore: {e}\nMessaggio: {commit_message}",
             to_email=_receiver_email,
             sender_email=_sender_email
         )
@@ -147,12 +171,88 @@ def commit_and_push_on_new_branch(repo_path, commit_message, base_branch="main",
 
 # Funzioni principali del Project-Bot
 def generate_response_with_ai(prompt, model="gpt-4o-mini"):
-    # ... (questa funzione rimane uguale) ...
-    pass
+    """
+    Genera una risposta usando l'API di OpenAI.
+    """
+    global _openai_api_key 
+    if not _openai_api_key:
+        print("Errore: OPENAI_API_KEY non configurata per la chiamata AI. Impossibile generare contenuto.")
+        return None
+    print(f"Chiamata OpenAI API con prompt: {prompt[:100]}...")
+    try:
+        completion = openai.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": "Sei un assistente AI utile e specializzato nella generazione di codice e contenuti tecnici."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        print("Risposta OpenAI ricevuta.")
+        return completion.choices[0].message.content
+    except openai.APIError as e:
+        print(f"Errore API OpenAI: {e}")
+        send_email(
+            subject="[AUTO-DEV-SYSTEM] Errore API OpenAI",
+            body=f"Il Project-Bot ha riscontrato un errore con l'API di OpenAI.\nErrore: {e}",
+            to_email=_receiver_email,
+            sender_email=_sender_email
+        )
+        return None
+    except Exception as e:
+        print(f"Errore generico durante la chiamata OpenAI: {e}")
+        send_email(
+            subject=f"[AUTO-DEV-SYSTEM] Errore Project-Bot (OpenAI)",
+            body=f"Il Project-Bot ha riscontrato un errore generico durante la chiamata OpenAI.\nErrore: {e}",
+            to_email=_receiver_email,
+            sender_email=_sender_email
+        )
+        return None
 
 def create_file_task(task_details):
-    # ... (questa funzione rimane uguale, dato che la creazione del file funziona localmente) ...
-    pass
+    """
+    Gestisce il task di creazione di un file.
+    """
+    print("Inizio funzione create_file_task.")
+    file_path = task_details.get('path')
+    prompt_for_content = task_details.get('prompt_for_content')
+
+    print(f"Dettagli task creazione file: path='{file_path}', prompt_for_content='{prompt_for_content[:50]}...'")
+
+    if not file_path:
+        print("Errore: 'path' non specificato per il task 'create_file'. Restituisco False.")
+        return False
+
+    print(f"Tentativo di creazione file: {file_path}")
+    content = ""
+    if prompt_for_content:
+        print(f"Generando contenuto AI per il file: {file_path}...")
+        ai_generated_content = generate_response_with_ai(prompt_for_content)
+        if ai_generated_content:
+            content = ai_generated_content
+        else:
+            print("Impossibile generare contenuto AI. Il file non verrà creato. Restituisco False.")
+            return False
+
+    try:
+        dir_name = os.path.dirname(file_path)
+        if dir_name:
+            os.makedirs(dir_name, exist_ok=True)
+        
+        full_path = os.path.join(get_repo_root(), file_path)
+        print(f"Scrivendo il file completo in: {full_path}")
+        with open(full_path, 'w') as f:
+            f.write(content)
+        print(f"File '{full_path}' creato/aggiornato con successo.")
+        return True
+    except Exception as e:
+        print(f"Errore durante la creazione del file '{file_path}': {e}. Restituisco False.")
+        send_email(
+            subject=f"[AUTO-DEV-SYSTEM] Errore Project-Bot: Creazione file fallita",
+            body=f"Il Project-Bot non è riuscito a creare il file '{file_path}'.\nErrore: {e}",
+            to_email=_receiver_email,
+            sender_email=_sender_email
+        )
+        return False
 
 def update_business_plan_status(task_index, phase_index, new_status="completed"):
     """
@@ -179,7 +279,7 @@ def update_business_plan_status(task_index, phase_index, new_status="completed")
                 yaml.dump(plan, file, default_flow_style=False, sort_keys=False) # sort_keys=False mantiene l'ordine
 
             print(f"Stato del task {task_index} nella fase {phase_index} aggiornato a '{new_status}'.")
-            return True # Non committiamo/pushiamo qui, lo farà la funzione chiamante
+            return True
         else:
             print("Avviso: Impossibile trovare il task da aggiornare nel Business Plan.")
             return False
@@ -204,20 +304,26 @@ def run_project_bot(task_details, task_index, phase_index):
     task_type = task_details.get('type')
     
     print(f"Inizio esecuzione run_project_bot per task: '{task_description}' (Tipo: {task_type}).")
+    print(f"Task details completi: {task_details}")
     
     task_completed = False
-    commit_message = f"feat: {task_description[:70]}..." # Messaggio base per il commit
+    commit_message = f"feat: {task_description[:70]}..."
 
     # 1. Esegui l'azione del task
     if task_type == 'create_file':
+        print("Rilevato task_type 'create_file'. Chiamata create_file_task.")
         task_completed = create_file_task(task_details)
+        if task_completed:
+            print("create_file_task completato con successo.")
+        else:
+            print("create_file_task ha restituito False (fallimento).")
         commit_message = f"feat: Create file {task_details.get('path', 'unknown')}"
     elif task_type == 'info' or task_type == 'action' or task_type == 'generate_code':
+        print(f"Rilevato task_type '{task_type}'. Processando via AI prompt.")
         ai_prompt = f"Genera un messaggio per il completamento del seguente task: '{task_description}'."
         ai_response = generate_response_with_ai(ai_prompt)
         if ai_response:
             print(f"Risposta AI per il task '{task_description}': {ai_response}")
-            # Non inviamo email qui, la notifica finale gestirà tutto
             task_completed = True
         else:
             print("Il Project-Bot non è riuscito a generare una risposta AI per il task info/action.")
@@ -237,7 +343,6 @@ def run_project_bot(task_details, task_index, phase_index):
     bp_update_successful = update_business_plan_status(task_index, phase_index, "completed" if task_completed else "failed")
     if not bp_update_successful:
         print("Errore: Fallimento nella scrittura locale dello stato del Business Plan.")
-        # Se non riusciamo nemmeno a scrivere localmente, è un problema serio, non possiamo procedere al push
         task_completed = False # Considera il task fallito se non si può aggiornare il BP
 
     # 3. Committa e pusha le modifiche sul nuovo branch e crea PR (se ci sono modifiche)

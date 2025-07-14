@@ -17,7 +17,8 @@ try:
     print(f"Connesso al repository: {repo.full_name}")
 except Exception as e:
     print(f"Errore durante l'inizializzazione di GitHub API: {e}")
-    print(f"Tentativo di invio email di errore (non garantito senza init di email_sender): {e}")
+    # In questo punto, send_email non è ancora garantito che funzioni a causa dell'inizializzazione.
+    # L'Action fallirà comunque con exit(1) che è visibile nel log.
     exit(1) # Termina lo script se non si connette a GitHub
 
 # --- Funzioni del Manager-Bot ---
