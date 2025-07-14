@@ -1,14 +1,64 @@
-# Funzioni principali del Project-Bot
-def generate_response_with_ai(prompt, openai_api_key, receiver_email, sender_email, model="gpt-4o-mini"): # <--- NUOVI ARGOMENTI
+import os
+import openai
+from src.utils.email_sender import send_email
+import yaml
+# Rimuovi importazioni GitPython e PyGithubClient
+# from git import Repo, exc
+# from github import Github as PyGithubClient
+# from urllib.parse import urlparse, urlunparse
+
+# Variabili Globali per le credenziali
+_openai_api_key = None
+_receiver_email = None
+_sender_email = None
+_github_token = None # Ancora passato, utile se ci fossero chiamate PyGithub dirette in futuro
+# _github_api_client = None # Non più necessario per questo file
+
+def init_project_bot_env(openai_api_key, receiver_email, sender_email, github_token):
+    """
+    Inizializza le variabili d'ambiente per il Project-Bot.
+    """
+    global _openai_api_key, _receiver_email, _sender_email, _github_token
+    _openai_api_key = openai_api_key
+    _receiver_email = receiver_email
+    _sender_email = sender_email
+    _github_token = github_token # Conserva il token per uso futuro se necessario, ma non per Git/PR qui
+    openai.api_key = openai_api_key
+    print("Project-Bot Environment Inizializzato.")
+    # Rimuovi inizializzazione PyGithub client da qui, sarà nel nuovo workflow
+    # if not _github_api_client:
+    # try:
+    #    _github_api_client = PyGithubClient(_github_token)
+    #    print("PyGithub client inizializzato.")
+    # except Exception as e:
+    #    print(f"Errore nell'inizializzazione del client PyGithub: {e}")
+    #    send_email(...)
+    #    _github_api_client = None
+
+
+# Rimuovi tutte le funzioni relative a GitPython e PyGithubClient
+# def get_repo_obj(): ...
+# def commit_and_push_on_new_branch(...): ...
+
+# Funzioni ausiliarie
+def get_repo_root():
+    return os.getenv('GITHUB_WORKSPACE', os.getcwd())
+
+# Funzioni principali del Project-Bot (quasi tutte rimangono uguali)
+def generate_response_with_ai(prompt, model="gpt-4o-mini"):
     """
     Genera una risposta usando l'API di OpenAI.
     """
-    if not openai_api_key:
+    global _openai_api_key 
+    if not _openai_api_key:
         print("Errore: OPENAI_API_KEY non configurata per la chiamata AI. Impossibile generare contenuto.")
+        send_email(
+            subject="[AUTO-DEV-SYSTEM] Errore Configurazione OpenAI",
+            body="Il Project-Bot non ha trovato la OPENAI_API_KEY. Assicurati che sia configurata correttamente nei Secrets.",
+            to_email=_receiver_email,
+            sender_email=_sender_email
+        )
         return None
-    
-    # Imposta la chiave API di OpenAI QUI, per questa singola chiamata
-    openai.api_key = openai_api_key 
     
     print(f"DEBUG: Tentativo di chiamata OpenAI API. Prompt: {prompt[:100]}...")
     
@@ -27,8 +77,8 @@ def generate_response_with_ai(prompt, openai_api_key, receiver_email, sender_ema
         send_email(
             subject="[AUTO-DEV-SYSTEM] Errore di Autenticazione OpenAI",
             body=f"Il Project-Bot ha riscontrato un errore di autenticazione con l'API di OpenAI.\nErrore: {e}\nAssicurati che OPENAI_API_KEY sia corretta e valida.",
-            to_email=receiver_email, # Usa gli argomenti per l'email
-            sender_email=sender_email
+            to_email=_receiver_email,
+            sender_email=_sender_email
         )
         return None
     except openai.APICallError as e:
@@ -36,8 +86,8 @@ def generate_response_with_ai(prompt, openai_api_key, receiver_email, sender_ema
         send_email(
             subject="[AUTO-DEV-SYSTEM] Errore API OpenAI",
             body=f"Il Project-Bot ha riscontrato un errore durante la chiamata API di OpenAI.\nErrore: {e}\nCode: {e.code}, Type: {e.type}",
-            to_email=receiver_email, # Usa gli argomenti per l'email
-            sender_email=sender_email
+            to_email=_receiver_email,
+            sender_email=_sender_email
         )
         return None
     except Exception as e:
@@ -45,12 +95,12 @@ def generate_response_with_ai(prompt, openai_api_key, receiver_email, sender_ema
         send_email(
             subject=f"[AUTO-DEV-SYSTEM] Errore Project-Bot (OpenAI Generico)",
             body=f"Il Project-Bot ha riscontrato un errore generico durante la chiamata OpenAI.\nErrore: {e}\nTipo: {type(e)}",
-            to_email=receiver_email, # Usa gli argomenti per l'email
-            sender_email=sender_email
+            to_email=_receiver_email,
+            sender_email=_sender_email
         )
         return None
 
-def create_file_task(task_details, openai_api_key, receiver_email, sender_email): # <--- NUOVI ARGOMENTI
+def create_file_task(task_details):
     """
     Gestisce il task di creazione di un file.
     """
@@ -69,7 +119,7 @@ def create_file_task(task_details, openai_api_key, receiver_email, sender_email)
     if prompt_for_content:
         print(f"Generando contenuto AI per il file: {file_path}...")
         try:
-            ai_generated_content = generate_response_with_ai(prompt_for_content, openai_api_key, receiver_email, sender_email) # <--- PASSA ARGOMENTI
+            ai_generated_content = generate_response_with_ai(prompt_for_content)
         except Exception as e:
             print(f"Errore inaspettato durante la chiamata generate_response_with_ai: {e}")
             ai_generated_content = None
@@ -96,17 +146,20 @@ def create_file_task(task_details, openai_api_key, receiver_email, sender_email)
         send_email(
             subject=f"[AUTO-DEV-SYSTEM] Errore Project-Bot: Creazione file fallita",
             body=f"Il Project-Bot non è riuscito a creare il file '{file_path}'.\nErrore: {e}",
-            to_email=receiver_email, # Usa gli argomenti per l'email
-            sender_email=sender_email
+            to_email=_receiver_email,
+            sender_email=_sender_email
         )
         return False
 
 def update_business_plan_status(task_index, phase_index, new_status="completed"):
-    global _receiver_email, _sender_email # Mantenuto qui perché send_email è chiamato
+    """
+    Aggiorna lo stato di un task nel business_plan.yaml (solo localmente).
+    """
+    global _receiver_email, _sender_email 
     repo_root = get_repo_root()
     business_plan_path = os.path.join(repo_root, 'src', 'business_plan.yaml')
 
-    print(f"Tentativo di aggiornare BP per task {task_index} fase {phase_index} a {new_status}")
+    print(f"Tentativo di aggiornare BP localmente per task {task_index} fase {phase_index} a {new_status}")
 
     try:
         with open(business_plan_path, 'r') as file:
@@ -121,18 +174,18 @@ def update_business_plan_status(task_index, phase_index, new_status="completed")
             with open(business_plan_path, 'w') as file:
                 yaml.dump(plan, file, default_flow_style=False, sort_keys=False)
 
-            print(f"Stato del task {task_index} nella fase {phase_index} aggiornato a '{new_status}'.")
+            print(f"Stato del task {task_index} nella fase {phase_index} aggiornato a '{new_status}' localmente.")
             return True
         else:
-            print("Avviso: Impossibile trovare il task da aggiornare nel Business Plan.")
+            print("Avviso: Impossibile trovare il task da aggiornare nel Business Plan (nella scrittura locale).")
             return False
 
     except Exception as e:
-        print(f"Errore durante l'aggiornamento del Business Plan (solo scrittura file): {e}")
+        print(f"Errore durante l'aggiornamento del Business Plan (solo scrittura file): {e}. Tipo: {type(e)}") # <--- DEBUG TYPE
         send_email(
             subject="[AUTO-DEV-SYSTEM] Errore Project-Bot: Aggiornamento Business Plan (solo scrittura) fallito",
-            body=f"Il Project-Bot non è riuscito a scrivere il business_plan.yaml dopo l'aggiornamento dello stato.\nErrore: {e}",
-            to_email=_receiver_email, # Usa la variabile globale per l'email qui
+            body=f"Il Project-Bot non è riuscito a scrivere il business_plan.yaml dopo l'aggiornamento dello stato.\nErrore: {e}\nTipo: {type(e)}",
+            to_email=_receiver_email,
             sender_email=_sender_email
         )
         return False
@@ -142,7 +195,7 @@ def run_project_bot(task_details, task_index, phase_index):
     Funzione principale del Project-Bot.
     Prende i dettagli del task e li elabora.
     """
-    global _receiver_email, _sender_email, _openai_api_key # Aggiungi _openai_api_key qui
+    global _receiver_email, _sender_email 
     task_description = task_details.get('description', 'N/A')
     task_type = task_details.get('type')
     
@@ -155,7 +208,7 @@ def run_project_bot(task_details, task_index, phase_index):
     # 1. Esegui l'azione del task
     if task_type == 'create_file':
         print("Rilevato task_type 'create_file'. Chiamata create_file_task.")
-        task_completed = create_file_task(task_details, _openai_api_key, _receiver_email, _sender_email) # <--- PASSA ARGOMENTI
+        task_completed = create_file_task(task_details)
         if task_completed:
             print("create_file_task completato con successo.")
         else:
@@ -164,7 +217,7 @@ def run_project_bot(task_details, task_index, phase_index):
     elif task_type == 'info' or task_type == 'action' or task_type == 'generate_code':
         print(f"Rilevato task_type '{task_type}'. Processando via AI prompt.")
         ai_prompt = f"Genera un messaggio per il completamento del seguente task: '{task_description}'."
-        ai_response = generate_response_with_ai(ai_prompt, _openai_api_key, _receiver_email, _sender_email) # <--- PASSA ARGOMENTI
+        ai_response = generate_response_with_ai(ai_prompt)
         if ai_response:
             print(f"Risposta AI per il task '{task_description}': {ai_response}")
             task_completed = True
@@ -185,32 +238,38 @@ def run_project_bot(task_details, task_index, phase_index):
     # 2. Aggiorna lo stato del Business Plan (localmente)
     bp_update_successful = update_business_plan_status(task_index, phase_index, "completed" if task_completed else "failed")
     if not bp_update_successful:
-        print("Errore: Fallimento nella scrittura locale dello stato del Business Plan.")
+        print("Errore: Fallimento nella scrittura locale dello stato del Business Plan. Non verrà creato alcun file di trigger.")
         task_completed = False # Considera il task fallito se non si può aggiornare il BP
 
-    # 3. Committa e pusha le modifiche sul nuovo branch e crea PR (se ci sono modifiche)
+    # 3. Scrivi un file di trigger per il workflow di push/PR (solo se task completato e BP aggiornato)
     if task_completed and bp_update_successful:
-        print("Tentativo di commit e push su nuovo branch e creazione PR.")
-        push_and_pr_successful = commit_and_push_on_new_branch(get_repo_root(), commit_message)
-        
-        # 4. Notifica finale via email
-        if push_and_pr_successful:
+        print("Task completato e BP aggiornato localmente. Creazione file di trigger per il workflow Git/PR.")
+        trigger_file_path = os.path.join(get_repo_root(), ".autodev-trigger")
+        try:
+            with open(trigger_file_path, 'w') as f:
+                f.write(f"task_status: {'completed'}\n")
+                f.write(f"commit_message: {commit_message}\n")
+                f.write(f"timestamp: {os.getenv('GITHUB_RUN_ID')}\n")
+            print(f"File di trigger '{trigger_file_path}' creato con successo.")
+            
             send_email(
-                subject=f"[AUTO-DEV-SYSTEM] Project-Bot - Task Completato e PR Creata: {task_description[:50]}...",
-                body=f"Il Project-Bot ha completato con successo il task:\n'{task_description}'\n\nÈ stata creata una Pull Request per unire le modifiche. Controlla il tuo repository GitHub.",
+                subject=f"[AUTO-DEV-SYSTEM] Project-Bot - Task Completato Localmente: {task_description[:50]}...",
+                body=f"Il Project-Bot ha completato il task:\n'{task_description}'\n\nIl Business Plan è stato aggiornato localmente e il file di trigger per il workflow Git/PR è stato creato. Attendi la Pull Request.",
                 to_email=_receiver_email,
                 sender_email=_sender_email
             )
-        else:
-            print("Avviso: Task completato localmente, ma push o PR falliti.")
+
+        except Exception as e:
+            print(f"Errore nella creazione del file di trigger: {e}")
             send_email(
-                subject=f"[AUTO-DEV-SYSTEM] Project-Bot - Task Completato (Richiede Intervento Manuale): {task_description[:50]}...",
-                body=f"Il Project-Bot ha completato il task:\n'{task_description}'\n\n**ATTENZIONE:** Il push delle modifiche o la creazione della Pull Request sono falliti. Controllare i log di GitHub Actions per i dettagli. Potrebbe essere necessario un intervento manuale per recuperare le modifiche e unirle.",
+                subject=f"[AUTO-DEV-SYSTEM] Project-Bot - Errore Creazione Trigger: {task_description[:50]}...",
+                body=f"Il Project-Bot ha completato il task localmente ma non è riuscito a creare il file di trigger per il push/PR.\nErrore: {e}",
                 to_email=_receiver_email,
                 sender_email=_sender_email
             )
+            task_completed = False # Considera il task fallito se non può triggerare la fase successiva
     else:
-        print("Task fallito o BP non aggiornato. Nessun push o PR effettuata.")
+        print("Task fallito o BP non aggiornato localmente. Nessun file di trigger creato.")
         send_email(
             subject=f"[AUTO-DEV-SYSTEM] Project-Bot - Task Fallito: {task_description[:50]}...",
             body=f"Il Project-Bot non è riuscito a completare il task:\n'{task_description}'.\n\nControlla i log di GitHub Actions per i dettagli.",

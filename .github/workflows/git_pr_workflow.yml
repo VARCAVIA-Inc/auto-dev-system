@@ -1,0 +1,73 @@
+name: AutoDevSystem Git Operations
+
+on:
+  push:
+    paths:
+      - '.autodev-trigger' # Attiva questo workflow quando .autodev-trigger viene pushato
+    branches:
+      - main # Solo sul branch main (o il branch da cui il ManagerBot pusha)
+  workflow_dispatch: # Permette l'esecuzione manuale
+
+jobs:
+  create_branch_and_pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Richiede permessi di scrittura per il repo
+      pull-requests: write # Richiede permessi per creare PR
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.BOT_GITHUB_TOKEN }} # Usa il tuo PAT per il checkout con permessi di scrittura
+
+      - name: Set up Git User
+        run: |
+          git config user.name "AutoDevSystem Bot"
+          git config user.email "auto-dev-system@varcavia.com" # O una mail specifica per il bot
+
+      - name: Read Trigger File and Prepare Git Operations
+        id: read_trigger
+        run: |
+          if [ ! -f ".autodev-trigger" ]; then
+            echo "::error::Trigger file .autodev-trigger not found. Exiting."
+            exit 1
+          fi
+          
+          COMMIT_MESSAGE=$(grep "commit_message" .autodev-trigger | cut -d ':' -f 2- | sed 's/^ *//')
+          TIMESTAMP=$(grep "timestamp" .autodev-trigger | cut -d ':' -f 2- | sed 's/^ *//')
+          
+          if [ -z "$COMMIT_MESSAGE" ]; then
+            COMMIT_MESSAGE="AutoDevSystem: Unspecified task completion"
+          fi
+          
+          NEW_BRANCH_NAME="autodev-task-${TIMESTAMP}"
+          
+          echo "Commit message: $COMMIT_MESSAGE"
+          echo "New branch name: $NEW_BRANCH_NAME"
+          
+          echo "COMMIT_MESSAGE=$COMMIT_MESSAGE" >> $GITHUB_OUTPUT
+          echo "NEW_BRANCH_NAME=$NEW_BRANCH_NAME" >> $GITHUB_OUTPUT
+          
+          # Remove trigger file before branching/committing to avoid including it
+          rm .autodev-trigger
+
+      - name: Create New Branch and Commit Changes
+        run: |
+          git checkout -b ${{ steps.read_trigger.outputs.NEW_BRANCH_NAME }}
+          git add . # Aggiungi tutte le modifiche (inclusi i file creati dal Project-Bot)
+          git commit -m "${{ steps.read_trigger.outputs.COMMIT_MESSAGE }}"
+          git push origin ${{ steps.read_trigger.outputs.NEW_BRANCH_NAME }}
+
+      - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }} # GH CLI usa GH_TOKEN per l'autenticazione
+        run: |
+          gh pr create --title "${{ steps.read_trigger.outputs.COMMIT_MESSAGE }}" \
+                       --body "Automatically generated Pull Request by AutoDevSystem for task: ${{ steps.read_trigger.outputs.COMMIT_MESSAGE }}" \
+                       --head ${{ steps.read_trigger.outputs.NEW_BRANCH_NAME }} \
+                       --base main
+
+      - name: Notify Success (Optional)
+        run: |
+          echo "Pull Request successfully created."
+          # Qui potresti aggiungere un passo per inviare una mail di successo della PR.
