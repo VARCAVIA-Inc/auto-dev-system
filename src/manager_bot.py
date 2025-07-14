@@ -2,13 +2,13 @@ import os
 import yaml
 from github import Github
 from src.utils.email_sender import send_email
-from src.project_bot import run_project_bot, init_project_bot_env # <--- AGGIUNGI init_project_bot_env
+from src.project_bot import run_project_bot, init_project_bot_env
 
 # --- Inizializzazione ---
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 RECEIVER_EMAIL = os.getenv("RECEIVER_EMAIL")
 SENDER_EMAIL = os.getenv("SENDER_EMAIL")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") # <--- Recupera anche la chiave OpenAI qui
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # Inizializza il client GitHub
 try:
@@ -17,23 +17,66 @@ try:
     print(f"Connesso al repository: {repo.full_name}")
 except Exception as e:
     print(f"Errore durante l'inizializzazione di GitHub API: {e}")
-    send_email(
-        subject="[AUTO-DEV-SYSTEM] Errore critico: GitHub API non inizializzata",
-        body=f"Il Manager-Bot non è riuscito a connettersi all'API di GitHub.\nErrore: {e}\nAssicurati che BOT_GITHUB_TOKEN sia corretto e con i permessi necessari.",
-        to_email=RECEIVER_EMAIL,
-        sender_email=SENDER_EMAIL
-    )
-    exit(1)
+    # Nota: send_email qui potrebbe non funzionare se le variabili non sono passate al modulo email_sender.
+    # Ma in questo caso, è un errore critico di avvio.
+    print(f"Tentativo di invio email di errore (non garantito senza init di email_sender): {e}")
+    exit(1) # Termina lo script se non si connette a GitHub
 
-# --- Funzioni del Manager-Bot (non cambiano) ---
-# send_initial_status_email()
-# read_business_plan()
+# --- Funzioni del Manager-Bot ---
+
+def send_initial_status_email():
+    """
+    Invia un'email per confermare l'avvio del Manager-Bot.
+    Questa funzione non viene più usata in `main()` direttamente, ma può essere utile.
+    """
+    subject = "[AUTO-DEV-SYSTEM] Manager-Bot Avviato!"
+    body = (
+        f"Ciao {RECEIVER_EMAIL},\n\n"
+        "Il Manager-Bot è stato avviato con successo e sta eseguendo il suo primo controllo.\n"
+        "Questo è un test di funzionamento del sistema di notifica via email.\n\n"
+        "Resto in attesa di istruzioni dal Business Plan.\n\n"
+        "Saluti,\nIl tuo Manager-Bot."
+    )
+    print(f"Tentativo di inviare email di stato iniziale a {RECEIVER_EMAIL}...")
+    success = send_email(subject, body, RECEIVER_EMAIL, SENDER_EMAIL)
+    if success:
+        print("Email di stato iniziale inviata.")
+    else:
+        print("Impossibile inviare l'email di stato iniziale.")
+
+def read_business_plan():
+    """
+    Legge il file business_plan.yaml.
+    """
+    business_plan_path = 'src/business_plan.yaml'
+    if not os.path.exists(business_plan_path):
+        print(f"Avviso: Il Business Plan non trovato in {business_plan_path}. Creazione di un file vuoto.")
+        with open(business_plan_path, 'w') as f:
+            f.write("# Questo file conterrà il Business Plan per il tuo progetto.\n")
+        return {}
+    
+    with open(business_plan_path, 'r') as file:
+        try:
+            plan = yaml.safe_load(file)
+            print("Business Plan letto con successo.")
+            return plan if plan else {}
+        except yaml.YAMLError as exc:
+            print(f"Errore durante la lettura del Business Plan: {exc}")
+            send_email(
+                subject="[AUTO-DEV-SYSTEM] Errore: Business Plan non valido",
+                body=f"Il Manager-Bot ha riscontrato un errore nel leggere il file business_plan.yaml.\nErrore: {exc}\nControlla la sintassi YAML.",
+                to_email=RECEIVER_EMAIL,
+                sender_email=SENDER_EMAIL
+            )
+            return {}
 
 def main():
     print("Manager-Bot avviato.")
 
-    # Inizializza l'ambiente del Project-Bot
-    init_project_bot_env(OPENAI_API_KEY, RECEIVER_EMAIL, SENDER_EMAIL, GITHUB_TOKEN) # <--- AGGIUNGI QUESTA RIGA
+    # Inizializza l'ambiente del Project-Bot e il modulo email_sender
+    # Assicurati di passare anche i parametri per email_sender.py
+    send_email(subject="", body="", to_email="", sender_email="") # Inizializza send_email con valori vuoti per triggerare la lettura delle variabili
+    init_project_bot_env(OPENAI_API_KEY, RECEIVER_EMAIL, SENDER_EMAIL, GITHUB_TOKEN)
 
     business_plan = read_business_plan()
     print(f"Contenuto parziale del Business Plan: {str(business_plan)[:200]}...")
