@@ -60,10 +60,6 @@ def push_trigger_files_to_main(repo_path, commit_message):
         parsed_url = urlparse(original_url)
         
         netloc_part = parsed_url.netloc.split('@', 1)[-1] if '@' in parsed_url.netloc else parsed_url.netloc
-        # Usiamo il GITHUB_TOKEN per l'autenticazione.
-        # GitHub Actions dovrebbe già configurare l'ambiente Git in modo che `origin.push()` funzioni.
-        # Riprovo la configurazione esplicita per il push del trigger, data la persistenza del problema.
-        # Se questo fallisce ancora con 403, è una policy organizzativa strettissima.
         auth_url = urlunparse(parsed_url._replace(netloc=f"oauth2:{_github_token}@{netloc_part}"))
         
         print(f"DEBUG: Impostazione URL remoto per push trigger: {auth_url.replace(_github_token, '*****')}")
@@ -154,11 +150,12 @@ def generate_response_with_ai(prompt, model="gpt-4o-mini"):
 
 def create_file_task(task_details):
     """
-    Gestisce il task di creazione di un file, con contenuto statico per debug.
+    Gestisce il task di creazione di un file, con contenuto generato da AI.
     """
     print("Inizio funzione create_file_task.")
     file_path = task_details.get('path')
     prompt_for_content = task_details.get('prompt_for_content')
+    content = "" # Contenuto di default
 
     print(f"Dettagli task creazione file: path='{file_path}', prompt_for_content='{prompt_for_content[:50]}...'")
 
@@ -168,25 +165,22 @@ def create_file_task(task_details):
 
     print(f"Tentativo di creazione file: {file_path}")
     
-    # --- MODIFICA CRITICA: Contenuto statico, bypass AI per test ---
-    content = f"Questo è un messaggio di benvenuto autogenerato per il file {file_path}.\n"
-    content += "La generazione AI è stata bypassata per diagnosticare un problema."
-    # --- FINE MODIFICA CRITICA ---
-    
-    # Rimuoviamo il blocco di chiamata AI per ora:
-    # if prompt_for_content:
-    #     print(f"Generando contenuto AI per il file: {file_path}...")
-    #     try:
-    #         ai_generated_content = generate_response_with_ai(prompt_for_content)
-    #     except Exception as e:
-    #         print(f"Errore inaspettato durante la chiamata generate_response_with_ai: {e}")
-    #         ai_generated_content = None
-    #     
-    #     if ai_generated_content:
-    #         content = ai_generated_content
-    #     else:
-    #         print("Impossibile generare contenuto AI. Il file non verrà creato. Restituisco False.")
-    #         return False
+    if prompt_for_content:
+        print(f"Generando contenuto AI per il file: {file_path}...")
+        try:
+            ai_generated_content = generate_response_with_ai(prompt_for_content)
+        except Exception as e:
+            print(f"Errore inaspettato durante la chiamata generate_response_with_ai: {e}")
+            ai_generated_content = None
+        
+        if ai_generated_content:
+            content = ai_generated_content
+        else:
+            print("Impossibile generare contenuto AI. Il file non verrà creato. Restituisco False.")
+            return False
+    else:
+        # Se non c'è prompt, crea un file vuoto.
+        print("Nessun prompt fornito, il file verrà creato vuoto.")
 
     try:
         dir_name = os.path.dirname(file_path)
