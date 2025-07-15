@@ -9,17 +9,19 @@ on:
   workflow_dispatch: # Permette l'esecuzione manuale
   schedule:
     - cron: '0 0 * * *' # Ogni giorno a mezzanotte UTC
-  
+
 jobs:
   run_manager_bot:
     runs-on: ubuntu-latest
     permissions: # Permessi espliciti per questo job
-      contents: write # Permette al GITHUB_TOKEN di scrivere nel repository
+      contents: write # Permette di scrivere nel repository
       pull-requests: write # Permette di creare e gestire Pull Request
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        # Non specificare 'token:' qui, userà il GITHUB_TOKEN implicito con i permessi definiti sopra.
+        with:
+          # Usa esplicitamente il PAT per tutte le operazioni git
+          token: ${{ secrets.BOT_GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -32,13 +34,13 @@ jobs:
           pip install PyYAML
           pip install PyGithub
           pip install secure-smtplib
-          pip install openai 
+          pip install openai
           pip install GitPython
 
       - name: Run Manager Bot
         env:
           # Passiamo tutti i secret al bot.
-          # GITHUB_TOKEN qui è il tuo PAT esplicito (secrets.BOT_GITHUB_TOKEN).
+          # Qui GITHUB_TOKEN è il nome della variabile d'ambiente che conterrà il valore del tuo PAT
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
           EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
           EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
