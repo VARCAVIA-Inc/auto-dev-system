@@ -1,0 +1,19 @@
+- [ ] [shell-command] mkdir -p src
+- [ ] [shell-command] mkdir -p tests
+- [ ] [src/calculator.py] Definire la classe Calculator
+- [ ] [src/calculator.py] Implementare il metodo per l'operazione di addizione
+- [ ] [src/calculator.py] Implementare il metodo per l'operazione di sottrazione
+- [ ] [src/calculator.py] Implementare il metodo per l'operazione di moltiplicazione
+- [ ] [src/calculator.py] Implementare il metodo per l'operazione di divisione
+- [ ] [shell-command] touch README.md
+- [ ] [README.md] Scrivere la documentazione base sull'utilizzo dell'applicazione calcolatrice
+- [ ] [requirements.txt] Definire le dipendenze del progetto
+- [ ] [shell-command] python3 -m venv venv
+- [ ] [shell-command] source venv/bin/activate
+- [ ] [shell-command] pip install -r requirements.txt
+- [ ] [tests/test_calculator.py] Creare test unitari per il metodo di addizione
+- [ ] [tests/test_calculator.py] Creare test unitari per il metodo di sottrazione
+- [ ] [tests/test_calculator.py] Creare test unitari per il metodo di moltiplicazione
+- [ ] [tests/test_calculator.py] Creare test unitari per il metodo di divisione
+- [ ] [shell-command] python -m unittest discover -s tests
+- [ ] [shell-command] Aggiornare il README con le istruzioni per eseguire i test
