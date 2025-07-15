@@ -37,4 +37,4 @@ phases:
       \ 'AutoDevSystem' che si auto-genera e gestisce lo sviluppo tramite AI. Includi\
       \ sezioni per Setup, Utilizzo e Funzionalit\xE0."
     agent: ProjectBot
-    status: pending
+    status: completed
