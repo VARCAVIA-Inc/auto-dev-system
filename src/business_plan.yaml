@@ -3,6 +3,7 @@ description: Sviluppo del sistema di generazione automatica del codice basato su
 phases:
 - name: Sviluppo Core
   tasks:
-  - description: Implementare un sistema di autenticazione utenti base con login e registrazione.
+  - description: Implementare un sistema di autenticazione utenti base con login e
+      registrazione.
     agent: ProjectBot
-    status: pending
+    status: completed
