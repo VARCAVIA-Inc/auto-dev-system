@@ -23,7 +23,7 @@ phases:
   - description: Implementa la logica di gestione dei branch per i task.
     type: action
     agent: ProjectBot
-    status: pending
+    status: completed
 - name: Generazione Codice Base
   tasks:
   - description: Genera un modulo Python di esempio per la gestione delle stringhe.
