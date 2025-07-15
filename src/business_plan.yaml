@@ -35,6 +35,6 @@ phases:
     path: README.md
     prompt_for_content: "Genera il contenuto di un README.md per un repository chiamato\
       \ 'AutoDevSystem' che si auto-genera e gestisce lo sviluppo tramite AI. Includi\
-      \ sezioni per Setup, Utilizzo e Funzionalit\xE0."
+      \ sezioni per Setup, Utilizzo e Funzionalità."
     agent: ProjectBot
-    status: completed
+    status: pending # <-- MODIFICA QUI
