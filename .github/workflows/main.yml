@@ -9,6 +9,9 @@ on:
   workflow_dispatch: # Permette l'esecuzione manuale
   schedule:
     - cron: '0 0 * * *' # Ogni giorno a mezzanotte UTC
+    permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   run_manager_bot:
