@@ -6,4 +6,4 @@ phases:
   - description: Implementare un sistema di autenticazione utenti base con login e
       registrazione.
     agent: ProjectBot
-    status: pending
+    status: planned
