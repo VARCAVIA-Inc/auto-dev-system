@@ -18,12 +18,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.BOT_GITHUB_TOKEN }} # Usa il tuo PAT per il checkout con permessi di scrittura
+          # Assicurati che il checkout avvenga sul commit che ha triggerato il workflow
+          ref: ${{ github.sha }} 
+          token: ${{ secrets.BOT_GITHUB_TOKEN }}
 
       - name: Set up Git User
         run: |
           git config user.name "AutoDevSystem Bot"
-          git config user.email "auto-dev-system@varcavia.com" # O una mail specifica per il bot
+          git config user.email "auto-dev-system@varcavia.com"
 
       - name: Read Trigger File and Prepare Git Operations
         id: read_trigger
@@ -48,15 +50,19 @@ jobs:
           echo "COMMIT_MESSAGE=$COMMIT_MESSAGE" >> $GITHUB_OUTPUT
           echo "NEW_BRANCH_NAME=$NEW_BRANCH_NAME" >> $GITHUB_OUTPUT
           
-          # Remove trigger file before branching/committing to avoid including it
+          # Rimuovi il file di trigger prima di committare per non includerlo nella PR
           rm .autodev-trigger
 
-      - name: Create New Branch and Commit Changes
+      - name: Create New Branch, Commit, and Push Changes
         run: |
           git checkout -b ${{ steps.read_trigger.outputs.NEW_BRANCH_NAME }}
-          git add . # Aggiungi tutte le modifiche (inclusi i file creati dal Project-Bot)
+          git add . # Aggiungi tutte le modifiche (inclusa la rimozione del trigger)
           git commit -m "${{ steps.read_trigger.outputs.COMMIT_MESSAGE }}"
-          git push origin ${{ steps.read_trigger.outputs.NEW_BRANCH_NAME }}
+          
+          # --- MODIFICA CRUCIALE PER L'AUTENTICAZIONE ---
+          # Usa un URL con il token per un push a prova di errore.
+          # L'utente 'VARCAVIA-Git' è preso dal messaggio di errore.
+          git push https://VARCAVIA-Git:${{ secrets.BOT_GITHUB_TOKEN }}@github.com/VARCAVIA-Inc/auto-dev-system.git ${{ steps.read_trigger.outputs.NEW_BRANCH_NAME }}
 
       - name: Create Pull Request
         env:
@@ -70,4 +76,3 @@ jobs:
       - name: Notify Success (Optional)
         run: |
           echo "Pull Request successfully created."
-          # Qui potresti aggiungere un passo per inviare una mail di successo della PR.
