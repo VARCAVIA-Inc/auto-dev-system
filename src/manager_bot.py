@@ -1,112 +1,102 @@
 import os
 import yaml
+import subprocess
+import time
 from github import Github
 from src.utils.email_sender import send_email
 from src.project_bot import run_project_bot, init_project_bot_env
+from src.utils.git_utils import push_changes_to_main # Importa la funzione di push
 
-# --- Inizializzazione ---
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-RECEIVER_EMAIL = os.getenv("RECEIVER_EMAIL")
-SENDER_EMAIL = os.getenv("SENDER_EMAIL")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
-# Inizializza il client GitHub
-try:
-    g = Github(GITHUB_TOKEN)
-    repo = g.get_repo(os.getenv("GITHUB_REPOSITORY"))
-    print(f"Connesso al repository: {repo.full_name}")
-except Exception as e:
-    print(f"Errore durante l'inizializzazione di GitHub API: {e}")
-    print(f"Tentativo di invio email di errore (non garantito senza init di email_sender): {e}")
-    exit(1) # Termina lo script se non si connette a GitHub
-
-# --- Funzioni del Manager-Bot ---
-
-def send_initial_status_email():
-    """
-    Invia un'email per confermare l'avvio del Manager-Bot.
-    Questa funzione non viene più usata in `main()` direttamente, ma può essere utile per notifiche specifiche.
-    """
-    subject = "[AUTO-DEV-SYSTEM] Manager-Bot Avviato!"
-    body = (
-        f"Ciao {RECEIVER_EMAIL},\n\n"
-        "Il Manager-Bot è stato avviato con successo e sta eseguendo il suo primo controllo.\n"
-        "Questo è un test di funzionamento del sistema di notifica via email.\n\n"
-        "Resto in attesa di istruzioni dal Business Plan.\n\n"
-        "Saluti,\nIl tuo Manager-Bot."
-    )
-    print(f"Tentativo di inviare email di stato iniziale a {RECEIVER_EMAIL}...")
-    success = send_email(subject, body, RECEIVER_EMAIL, SENDER_EMAIL)
-    if success:
-        print("Email di stato iniziale inviata.")
-    else:
-        print("Impossibile inviare l'email di stato iniziale.")
-
-def read_business_plan():
-    """
-    Legge il file business_plan.yaml.
-    """
-    business_plan_path = 'src/business_plan.yaml'
-    if not os.path.exists(business_plan_path):
-        print(f"Avviso: Il Business Plan non trovato in {business_plan_path}. Creazione di un file vuoto.")
-        with open(business_plan_path, 'w') as f:
-            f.write("# Questo file conterrà il Business Plan per il tuo progetto.\n")
-        return {}
-    
-    with open(business_plan_path, 'r') as file:
-        try:
-            plan = yaml.safe_load(file)
-            print("Business Plan letto con successo.")
-            return plan if plan else {}
-        except yaml.YAMLError as exc:
-            print(f"Errore durante la lettura del Business Plan: {exc}")
-            send_email(
-                subject="[AUTO-DEV-SYSTEM] Errore: Business Plan non valido",
-                body=f"Il Manager-Bot ha riscontrato un errore nel leggere il file business_plan.yaml.\nErrore: {exc}\nControlla la sintassi YAML.",
-                to_email=RECEIVER_EMAIL,
-                sender_email=SENDER_EMAIL
-            )
-            return {}
+def get_repo_root():
+    return os.getenv('GITHUB_WORKSPACE', os.getcwd())
 
 def main():
     print("Manager-Bot avviato.")
-
-    # Inizializza l'ambiente del Project-Bot e assicura che il modulo email_sender sia pronto
-    send_email("TEST INIT", "Questo e' un test di inizializzazione.", RECEIVER_EMAIL, SENDER_EMAIL) 
-
+    # Inizializzazione delle credenziali
+    GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    RECEIVER_EMAIL = os.getenv("RECEIVER_EMAIL")
+    SENDER_EMAIL = os.getenv("SENDER_EMAIL")
+    
     init_project_bot_env(OPENAI_API_KEY, RECEIVER_EMAIL, SENDER_EMAIL, GITHUB_TOKEN)
 
-    business_plan = read_business_plan()
-    print(f"Contenuto parziale del Business Plan: {str(business_plan)[:200]}...")
+    # Leggi il Business Plan
+    business_plan_path = 'src/business_plan.yaml'
+    with open(business_plan_path, 'r') as file:
+        business_plan = yaml.safe_load(file)
+    
+    repo_root = get_repo_root()
 
-    if business_plan and 'project_name' in business_plan and 'phases' in business_plan:
-        print("Business Plan valido rilevato. Invocando il Project-Bot per i task...")
-        
-        for phase_index, phase in enumerate(business_plan['phases']):
-            for task_index, task in enumerate(phase.get('tasks', [])):
-                if task.get('agent') == 'ProjectBot' and task.get('status') == 'pending':
-                    print(f"Trovato task pendente per ProjectBot: {task.get('description')}")
-                    run_project_bot(task, task_index, phase_index)
-                    print("Un task gestito. Terminando questa esecuzione del Manager-Bot.")
-                    return # Esci dopo aver gestito un task
+    # Logica decisionale principale
+    for phase_index, phase in enumerate(business_plan.get('phases', [])):
+        for task_index, task in enumerate(phase.get('tasks', [])):
+            
+            # CASO 1: Task nuovo, da pianificare
+            if task.get('status') == 'pending' and task.get('agent') == 'ProjectBot':
+                print(f"Trovato task PENDING: {task.get('description')}")
+                run_project_bot(task, task_index, phase_index)
+                print("Un task è stato pianificato. Termino per questa esecuzione.")
+                return # Esci per riesaminare lo stato al prossimo run
 
-        print("Nessun task pendente trovato per ProjectBot.")
-        send_email(
-            subject="[AUTO-DEV-SYSTEM] Manager-Bot in attesa",
-            body="Il Manager-Bot ha scansionato il Business Plan ma non ha trovato task pendenti per il Project-Bot. In attesa di nuove istruzioni.",
-            to_email=RECEIVER_EMAIL,
-            sender_email=SENDER_EMAIL
-        )
-    else:
-        print("Nessun Business Plan valido o completo trovato. In attesa di istruzioni.")
-        send_email(
-            subject="[AUTO-DEV-SYSTEM] Manager-Bot in attesa",
-            body="Il Manager-Bot non ha trovato un Business Plan valido o completo. In attesa di istruzioni.",
-            to_email=RECEIVER_EMAIL,
-            sender_email=SENDER_EMAIL
-        )
+            # --- NUOVA LOGICA PER LA FASE 2 ---
+            # CASO 2: Task pianificato, da eseguire
+            elif task.get('status') == 'planned':
+                print(f"Trovato task PLANNED: {task.get('description')}. Inizio esecuzione delegata.")
+                plan_path = os.path.join(repo_root, 'development_plan.md')
+                
+                try:
+                    with open(plan_path, 'r+') as f:
+                        lines = f.readlines()
+                        
+                        # Trova il primo sotto-task non completato
+                        next_subtask_index = -1
+                        for i, line in enumerate(lines):
+                            if line.strip().startswith('- [ ]'):
+                                next_subtask_index = i
+                                break
+                        
+                        if next_subtask_index != -1:
+                            # Estrai la descrizione del sotto-task
+                            subtask_description = lines[next_subtask_index].replace('- [ ]', '').strip()
+                            print(f"Delego il sotto-task: '{subtask_description}'")
 
-    print("Manager-Bot completato per questa esecuzione.")
+                            # Prepara i parametri per l'Operator_Bot
+                            branch_name = f"operator/task-{int(time.time())}"
+                            commit_message = f"feat: Implementa '{subtask_description[:30]}...'"
+                            
+                            # Comando per avviare il workflow dell'Operator Bot
+                            command = [
+                                'gh', 'workflow', 'run', 'operator_bot_workflow.yml',
+                                '-f', f'branch_name={branch_name}',
+                                '-f', f'task_description={subtask_description}',
+                                '-f', f'commit_message={commit_message}'
+                            ]
+                            
+                            # Esegui il comando
+                            subprocess.run(command, check=True)
+                            print(f"Workflow 'Operator Bot' avviato per il branch '{branch_name}'.")
+
+                            # Aggiorna il piano di sviluppo per segnare il task come "in corso"
+                            lines[next_subtask_index] = lines[next_subtask_index].replace('[ ]', '[▶️] In Progress')
+                            f.seek(0)
+                            f.writelines(lines)
+                            
+                            # Committa l'aggiornamento del piano
+                            push_changes_to_main(repo_root, f"chore: Avviato sotto-task '{subtask_description[:30]}...'")
+
+                        else:
+                            print("Tutti i sotto-task del piano sono completati. Aggiorno stato a 'completed'.")
+                            # Qui aggiorneremo lo stato del task principale a 'completed'
+                            # Per ora lo lasciamo in 'planned'
+                            pass
+
+                except FileNotFoundError:
+                    print("Errore: development_plan.md non trovato per un task pianificato.")
+
+                print("Un sotto-task è stato delegato. Termino per questa esecuzione.")
+                return # Esci per riesaminare lo stato al prossimo run
+
+    print("Nessun task attivo (pending o planned) trovato. In attesa.")
 
 if __name__ == "__main__":
     main()
