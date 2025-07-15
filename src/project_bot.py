@@ -10,11 +10,11 @@ _openai_api_key = None
 _receiver_email = None
 _sender_email = None
 _github_token = None
+_github_user = "VARCAVIA-Git" # Nome utente associato al PAT, preso dai log di errore
 
 def init_project_bot_env(openai_api_key, receiver_email, sender_email, github_token):
     """
     Inizializza le variabili d'ambiente per il Project-Bot.
-    Questa funzione deve essere chiamata dal Manager-Bot prima di run_project_bot.
     """
     global _openai_api_key, _receiver_email, _sender_email, _github_token
     _openai_api_key = openai_api_key
@@ -24,21 +24,18 @@ def init_project_bot_env(openai_api_key, receiver_email, sender_email, github_to
     openai.api_key = openai_api_key
     print("Project-Bot Environment Inizializzato.")
 
-
 def get_repo_root():
     """Restituisce il percorso della radice del repository."""
     return os.getenv('GITHUB_WORKSPACE', os.getcwd())
 
-# Questa funzione sarà responsabile del push dei file di trigger
 def push_trigger_files_to_main(repo_path, commit_message):
     """
     Esegue un git add . e pusha al branch main i file modificati localmente.
-    Questo serve ad attivare il workflow secondario.
     """
     global _github_token, _receiver_email, _sender_email
 
     if not _github_token:
-        print("Errore: GITHUB_TOKEN non inizializzato per il push dei trigger. Impossibile pushare.")
+        print("Errore: GITHUB_TOKEN non inizializzato. Impossibile pushare.")
         return False
 
     print(f"Tentativo di pushare i file di trigger al branch main con messaggio: '{commit_message}'")
@@ -46,29 +43,30 @@ def push_trigger_files_to_main(repo_path, commit_message):
         repo = Repo(repo_path)
         
         repo.git.add(all=True)
-        print("Tutte le modifiche aggiunte all'indice Git per il push del trigger.")
+        print("Tutte le modifiche aggiunte all'indice Git.")
 
         if not repo.index.diff("HEAD"):
-            print("Nessuna modifica stageata da committare per il push del trigger. Saltando.")
+            print("Nessuna modifica da committare. Saltando il push.")
             return True
 
         repo.index.commit(commit_message)
-        print(f"Modifiche committate localmente per il push del trigger: '{commit_message}'.")
+        print(f"Modifiche committate localmente: '{commit_message}'.")
 
         origin = repo.remote(name='origin')
         original_url = origin.url
         parsed_url = urlparse(original_url)
         
         netloc_part = parsed_url.netloc.split('@', 1)[-1] if '@' in parsed_url.netloc else parsed_url.netloc
-        auth_url = urlunparse(parsed_url._replace(netloc=f"oauth2:{_github_token}@{netloc_part}"))
+
+        # --- MODIFICA CRUCIALE QUI ---
+        # Usiamo lo stesso formato di URL che funziona nell'altro workflow,
+        # specificando utente e token.
+        auth_url = urlunparse(parsed_url._replace(netloc=f"{_github_user}:{_github_token}@{netloc_part}"))
         
-        print(f"DEBUG: Impostazione URL remoto per push trigger: {auth_url.replace(_github_token, '*****')}")
-        repo.git.remote('set-url', 'origin', auth_url)
+        print(f"DEBUG: Impostazione URL remoto per push: {auth_url.replace(_github_token, '*****')}")
         
-        print("DEBUG: Eseguendo push sul branch main.")
-        origin.push("main")
-        
-        repo.git.remote('set-url', 'origin', original_url)
+        # Esegui il push usando l'URL con autenticazione
+        repo.git.push(auth_url, "main")
         
         print("File di trigger e BP pushati con successo al branch 'main'.")
         return True
@@ -91,7 +89,7 @@ def push_trigger_files_to_main(repo_path, commit_message):
         )
         return False
 
-
+# ... (il resto del file rimane invariato) ...
 # Funzioni principali del Project-Bot
 def generate_response_with_ai(prompt, model="gpt-4o-mini"):
     """
@@ -179,7 +177,6 @@ def create_file_task(task_details):
             print("Impossibile generare contenuto AI. Il file non verrà creato. Restituisco False.")
             return False
     else:
-        # Se non c'è prompt, crea un file vuoto.
         print("Nessun prompt fornito, il file verrà creato vuoto.")
 
     try:
@@ -204,7 +201,6 @@ def create_file_task(task_details):
         return False
 
 def update_business_plan_status(task_index, phase_index, new_status="completed"):
-    # ... (questa funzione rimane uguale) ...
     global _receiver_email, _sender_email 
     repo_root = get_repo_root()
     business_plan_path = os.path.join(repo_root, 'src', 'business_plan.yaml')
@@ -241,7 +237,6 @@ def update_business_plan_status(task_index, phase_index, new_status="completed")
         return False
 
 def run_project_bot(task_details, task_index, phase_index):
-    # ... (il resto della funzione run_project_bot) ...
     global _receiver_email, _sender_email 
     task_description = task_details.get('description', 'N/A')
     task_type = task_details.get('type')
@@ -252,7 +247,6 @@ def run_project_bot(task_details, task_index, phase_index):
     task_completed = False
     commit_message = f"feat: {task_description[:70]}..."
 
-    # 1. Esegui l'azione del task
     if task_type == 'create_file':
         print("Rilevato task_type 'create_file'. Chiamata create_file_task.")
         task_completed = create_file_task(task_details)
@@ -282,13 +276,11 @@ def run_project_bot(task_details, task_index, phase_index):
         )
         task_completed = False
 
-    # 2. Aggiorna lo stato del Business Plan (localmente)
     bp_update_successful = update_business_plan_status(task_index, phase_index, "completed" if task_completed else "failed")
     if not bp_update_successful:
         print("Errore: Fallimento nella scrittura locale dello stato del Business Plan. Non verrà creato alcun file di trigger.")
         task_completed = False
 
-    # 3. Se il task è completato e BP aggiornato, crea il file di trigger e pusha al main.
     if task_completed and bp_update_successful:
         print("Task completato e BP aggiornato localmente. Creazione file di trigger per il workflow Git/PR.")
         trigger_file_path = os.path.join(get_repo_root(), ".autodev-trigger")
@@ -299,22 +291,15 @@ def run_project_bot(task_details, task_index, phase_index):
                 f.write(f"timestamp: {os.getenv('GITHUB_RUN_ID')}\n")
             print(f"File di trigger '{trigger_file_path}' creato con successo.")
             
-            # Esegui il push dei file di trigger al branch main
             if push_trigger_files_to_main(get_repo_root(), f"chore: AutoDevSystem trigger for '{commit_message}'"):
                 send_email(
-                    subject=f"[AUTO-DEV-SYSTEM] Project-Bot - Task Completato Localmente: {task_description[:50]}...",
-                    body=f"Il Project-Bot ha completato il task:\n'{task_description}'\n\nIl Business Plan e il file di trigger sono stati pushati al branch main. Attendi la Pull Request dal workflow secondario.",
+                    subject=f"[AUTO-DEV-SYSTEM] Project-Bot - Task Completato e Trigger Pushato: {task_description[:50]}...",
+                    body=f"Il Project-Bot ha completato il task:\n'{task_description}'\n\nIl Business Plan e il file di trigger sono stati pushati al branch main. Il workflow secondario per la PR si attiverà a breve.",
                     to_email=_receiver_email,
                     sender_email=_sender_email
                 )
             else:
                 print("Avviso: Task completato localmente, ma push dei file di trigger al main fallito.")
-                send_email(
-                    subject=f"[AUTO-DEV-SYSTEM] Project-Bot - Task Completato (Push Trigger Fallito): {task_description[:50]}...",
-                    body=f"Il Project-Bot ha completato il task:\n'{task_description}'\n\nMA non è riuscito a pushare i file di trigger al branch main. Il workflow secondario non si attiverà. Controllare i log.",
-                    to_email=_receiver_email,
-                    sender_email=_sender_email
-                )
 
         except Exception as e:
             print(f"Errore nella creazione del file di trigger: {e}")
