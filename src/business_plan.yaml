@@ -29,7 +29,7 @@ phases:
   - description: Genera un modulo Python di esempio per la gestione delle stringhe.
     type: generate_code
     agent: ProjectBot
-    status: pending
+    status: completed
   - description: Crea un file README.md iniziale per il progetto.
     type: create_file
     path: README.md
