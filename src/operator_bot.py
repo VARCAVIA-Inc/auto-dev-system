@@ -40,13 +40,7 @@ def main():
     print(f"Operator_Bot avviato sul branch '{branch_name}' per il task: '{task_description}'")
 
     try:
-        match = re.search(r'\[(.*?)\]', task_description)
-        if not match:
-            raise ValueError("Percorso del file non trovato nel task. Formato atteso: '[path/file.ext] Descrizione'.")
-        
-        file_path = match.group(1)
-        print(f"File target identificato: {file_path}")
-
+        # Prepara il repository e il nuovo branch
         repo = Repo(repo_path)
         repo.git.config("user.name", "AutoDevSystem Bot")
         repo.git.config("user.email", "auto-dev-system@varcavia.com")
@@ -55,20 +49,42 @@ def main():
         new_branch.checkout()
         print(f"Creato e spostato sul nuovo branch: {branch_name}")
 
-        generated_content = generate_code_with_ai(task_description)
-        if generated_content is None:
-            raise Exception("La generazione del contenuto AI è fallita.")
+        # --- LOGICA DI ESECUZIONE MIGLIORATA ---
+        match = re.search(r'\[(.*?)\]', task_description)
+        if not match:
+            raise ValueError("Marcatore di tipo task non trovato. Formato atteso: '[tipo] Descrizione'.")
+        
+        task_type = match.group(1)
+        action_description = task_description.replace(f'[{task_type}]', '').strip()
+
+        # CASO 1: Il task è un comando da shell
+        if task_type == 'shell-command':
+            print(f"Eseguo comando shell: '{action_description}'")
+            result = subprocess.run(action_description, shell=True, capture_output=True, text=True)
+            if result.returncode != 0:
+                raise Exception(f"Comando shell fallito: {result.stderr}")
+            print("Comando shell eseguito con successo.")
+            repo.git.add(all=True) # Aggiunge qualsiasi modifica risultante dal comando
+
+        # CASO 2: Il task è la creazione/modifica di un file
+        else:
+            file_path = task_type
+            print(f"File target identificato: {file_path}")
+            generated_content = generate_code_with_ai(task_description)
+            if generated_content is None:
+                raise Exception("La generazione del contenuto AI è fallita.")
             
-        if generated_content.strip().startswith("```"):
-            generated_content = '\n'.join(generated_content.strip().split('\n')[1:-1])
+            if generated_content.strip().startswith("```"):
+                generated_content = '\n'.join(generated_content.strip().split('\n')[1:-1])
 
-        full_path = os.path.join(repo_path, file_path)
-        os.makedirs(os.path.dirname(full_path), exist_ok=True)
-        with open(full_path, 'w') as f:
-            f.write(generated_content)
-        print(f"File '{file_path}' creato/aggiornato.")
+            full_path = os.path.join(repo_path, file_path)
+            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            with open(full_path, 'w') as f:
+                f.write(generated_content)
+            print(f"File '{file_path}' creato/aggiornato.")
+            repo.git.add(full_path)
 
-        repo.git.add(full_path)
+        # Commit, Push, e PR (comune a entrambi i casi)
         repo.git.commit('-m', commit_message)
         print(f"Commit creato con messaggio: '{commit_message}'")
         

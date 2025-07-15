@@ -52,11 +52,13 @@ def run_project_bot(task_details, task_index, phase_index):
     task_description = task_details.get('description', 'N/A')
     print(f"Inizio FASE 1: Pianificazione per il task: '{task_description}'")
     
+    # --- PROMPT MIGLIORATO CON REGOLE PIÙ STRINGENTI ---
     prompt_per_piano = (
-        f"Dato l'obiettivo di alto livello: '{task_description}', crea un piano di sviluppo tecnico dettagliato. "
-        "Il piano deve essere in formato Markdown con una checklist. "
-        "Ogni sotto-task DEVE iniziare con il percorso completo del file su cui operare, racchiuso tra parentesi quadre. "
-        "Esempio: '- [ ] [src/app/main.py] Creare la funzione di avvio'."
+        f"Dato l'obiettivo di alto livello: '{task_description}', crea un piano di sviluppo tecnico dettagliato in formato Markdown con una checklist.\n"
+        "**REGOLE FONDAMENTALI:**\n"
+        "1. Ogni sotto-task che modifica o crea un file DEVE iniziare con il percorso del file tra parentesi quadre. Esempio: '- [ ] [src/calculator.py] Definire la classe Calculator'.\n"
+        "2. Se un task è un'azione generica che non modifica un file specifico (es. creare cartelle), usa '[shell-command]' come marcatore e scrivi il comando bash da eseguire. Esempio: '- [ ] [shell-command] mkdir -p src/utils'.\n"
+        "3. Sii specifico e granulare. Scomponi il lavoro in piccoli passi."
     )
     
     print("Sto generando il piano di sviluppo con l'AI...")
