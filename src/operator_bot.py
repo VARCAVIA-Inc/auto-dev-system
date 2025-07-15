@@ -5,22 +5,17 @@ import re
 import subprocess
 
 def get_full_repo_url():
-    """Costruisce l'URL del repo con autenticazione."""
     token = os.getenv("GITHUB_TOKEN")
     user = os.getenv("GITHUB_USER")
     repo_slug = os.getenv("GITHUB_REPOSITORY")
     return f"https://{user}:{token}@github.com/{repo_slug}.git"
 
 def generate_code_with_ai(task_description):
-    """
-    Genera codice o contenuto basato su un task specifico.
-    """
     prompt = (
         f"Sei un bot sviluppatore. Il tuo unico obiettivo è scrivere il codice o il contenuto necessario per completare il seguente task. "
         f"NON aggiungere spiegazioni o testo introduttivo. Fornisci solo il codice/contenuto richiesto, pronto per essere scritto in un file.\n\n"
         f"Task: '{task_description}'"
     )
-    
     try:
         openai.api_key = os.getenv("OPENAI_API_KEY")
         completion = openai.chat.completions.create(
@@ -47,7 +42,7 @@ def main():
     try:
         match = re.search(r'\[(.*?)\]', task_description)
         if not match:
-            raise ValueError("Percorso del file non trovato nella descrizione del task. Il formato deve essere '[percorso/del/file.ext] Descrizione'.")
+            raise ValueError("Percorso del file non trovato nel task. Formato atteso: '[path/file.ext] Descrizione'.")
         
         file_path = match.group(1)
         print(f"File target identificato: {file_path}")
@@ -62,7 +57,7 @@ def main():
 
         generated_content = generate_code_with_ai(task_description)
         if generated_content is None:
-            raise Exception("La generazione del contenuto è fallita.")
+            raise Exception("La generazione del contenuto AI è fallita.")
             
         if generated_content.strip().startswith("```"):
             generated_content = '\n'.join(generated_content.strip().split('\n')[1:-1])
@@ -84,8 +79,10 @@ def main():
         pr_title = commit_message
         pr_body = f"Pull Request automatica per completare il task:\n`{task_description}`"
         
+        env = os.environ.copy()
+        env['GH_TOKEN'] = os.getenv("GITHUB_TOKEN")
         gh_command = f'gh pr create --title "{pr_title}" --body "{pr_body}" --base main --head {branch_name}'
-        result = subprocess.run(gh_command, shell=True, capture_output=True, text=True, env=os.environ)
+        result = subprocess.run(gh_command, shell=True, capture_output=True, text=True, env=env)
         
         if result.returncode == 0:
             print(f"Pull Request creata con successo: {result.stdout.strip()}")

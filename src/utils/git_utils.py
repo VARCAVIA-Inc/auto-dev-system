@@ -3,9 +3,6 @@ from git import Repo
 from urllib.parse import urlparse, urlunparse
 
 def push_changes_to_main(repo_path, commit_message):
-    """
-    Aggiunge tutte le modifiche, le committa e le pusha al branch main.
-    """
     github_token = os.getenv("GITHUB_TOKEN")
     github_user = os.getenv("GITHUB_USER")
 

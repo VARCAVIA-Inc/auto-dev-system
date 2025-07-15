@@ -5,11 +5,10 @@ on:
     branches:
       - main
     paths-ignore:
-      - '.autodev-trigger'
       - 'development_plan.md'
   workflow_dispatch:
   schedule:
-    - cron: '0 * * * *' # Esegui ogni ora per supervisione
+    - cron: '0 * * * *'
 
 jobs:
   run_manager_bot:
@@ -17,6 +16,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      actions: write # Permesso per avviare altri workflow
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

@@ -10,9 +10,6 @@ def get_repo_root():
     return os.getenv('GITHUB_WORKSPACE', os.getcwd())
 
 def update_main_task_status(task_index, phase_index, new_status):
-    """
-    Funzione di utility per aggiornare lo stato nel business_plan.yaml.
-    """
     repo_root = get_repo_root()
     business_plan_path = os.path.join(repo_root, 'src', 'business_plan.yaml')
     try:
@@ -32,14 +29,12 @@ def update_main_task_status(task_index, phase_index, new_status):
 
 def main():
     print("Manager-Bot avviato.")
-    # Inizializzazione
     GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
     GITHUB_REPOSITORY = os.getenv("GITHUB_REPOSITORY")
     
     init_project_bot_env(OPENAI_API_KEY, None, None, GITHUB_TOKEN)
 
-    # Inizializza il client GitHub
     g = Github(GITHUB_TOKEN)
     repo = g.get_repo(GITHUB_REPOSITORY)
 
@@ -49,32 +44,26 @@ def main():
     
     repo_root = get_repo_root()
 
-    # Logica decisionale principale
     for phase_index, phase in enumerate(business_plan.get('phases', [])):
         for task_index, task in enumerate(phase.get('tasks', [])):
             task_status = task.get('status')
             task_description = task.get('description')
 
-            # CASO 1: Task nuovo, da pianificare
             if task_status == 'pending' and task.get('agent') == 'ProjectBot':
                 print(f"Trovato task PENDING: {task_description}")
                 run_project_bot(task, task_index, phase_index)
                 return
 
-            # CASO 2: Task pianificato, in supervisione e delega
             elif task_status == 'planned':
                 print(f"Trovato task PLANNED: {task_description}. Avvio supervisione e delega.")
                 plan_path = os.path.join(repo_root, 'development_plan.md')
                 plan_changed = False
                 
                 try:
-                    # Logica di Supervisione delle PR
-                    print("Controllo lo stato delle Pull Request...")
-                    pull_requests = repo.get_pulls(state='all', head='operator/')
-                    
                     with open(plan_path, 'r+') as f:
                         lines = f.readlines()
                         
+                        pull_requests = repo.get_pulls(state='all', head='operator/')
                         for pr in pull_requests:
                             if pr.is_merged():
                                 pr_title = pr.title
@@ -86,14 +75,12 @@ def main():
                                             plan_changed = True
                                             print(f"Sotto-task '{subtask_key}' completato (PR unita).")
                                             break
-
                         if plan_changed:
                             f.seek(0)
                             f.truncate()
                             f.writelines(lines)
                             push_changes_to_main(repo_root, f"chore: Aggiorna piano, task completati")
 
-                        # Logica di Delega
                         next_subtask_index = -1
                         for i, line in enumerate(lines):
                             if line.strip().startswith('- [ ]'):
@@ -105,9 +92,14 @@ def main():
                             print(f"Delego il sotto-task: '{subtask_description}'")
                             branch_name = f"operator/task-{int(time.time())}"
                             commit_message = f"feat: Implementa '{subtask_description[:30]}...'"
+                            
+                            env = os.environ.copy()
+                            env['GH_TOKEN'] = GITHUB_TOKEN
                             command = ['gh', 'workflow', 'run', 'operator_bot_workflow.yml', '-f', f'branch_name={branch_name}', '-f', f'task_description={subtask_description}', '-f', f'commit_message={commit_message}']
-                            subprocess.run(command, check=True, env=os.environ)
+                            
+                            subprocess.run(command, check=True, env=env)
                             print(f"Workflow 'Operator Bot' avviato per il branch '{branch_name}'.")
+
                             lines[next_subtask_index] = lines[next_subtask_index].replace('[ ]', '[▶️] In Progress')
                             f.seek(0)
                             f.truncate()
@@ -115,7 +107,6 @@ def main():
                             push_changes_to_main(repo_root, f"chore: Avviato sotto-task '{subtask_description[:30]}...'")
                             return
 
-                        # Logica di Completamento
                         else:
                             all_done = all('[✅]' in line for line in lines if line.strip().startswith('- ['))
                             if all_done:
@@ -126,9 +117,9 @@ def main():
                                 return
                 
                 except FileNotFoundError:
-                    print(f"Errore: development_plan.md non trovato per il task pianificato '{task_description}'. Reimposto a 'pending'.")
+                    print(f"Errore: development_plan.md non trovato per un task pianificato. Reimposto a 'pending'.")
                     update_main_task_status(task_index, phase_index, "pending")
-                    push_changes_to_main(repo_root, f"fix: Reimpostato task '{task_description[:30]}...' a pending per rigenerare il piano.")
+                    push_changes_to_main(repo_root, f"fix: Reimpostato task '{task_description[:30]}...' a pending.")
                     return
 
     print("Nessun task attivo (pending o planned) trovato. In attesa.")

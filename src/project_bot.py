@@ -4,14 +4,10 @@ import yaml
 from src.utils.git_utils import push_changes_to_main
 
 _openai_api_key = None
-_receiver_email = None
-_sender_email = None
 
 def init_project_bot_env(openai_api_key, receiver_email, sender_email, github_token):
-    global _openai_api_key, _receiver_email, _sender_email
+    global _openai_api_key
     _openai_api_key = openai_api_key
-    _receiver_email = receiver_email
-    _sender_email = sender_email
     os.environ['GITHUB_TOKEN'] = github_token
     os.environ['GITHUB_USER'] = "VARCAVIA-Git"
     openai.api_key = openai_api_key
@@ -28,7 +24,7 @@ def generate_response_with_ai(prompt, model="gpt-4o"):
         completion = openai.chat.completions.create(
             model=model,
             messages=[
-                {"role": "system", "content": "Sei un senior software architect e project manager. Il tuo compito è creare piani di sviluppo chiari, dettagliati e suddivisi in passi tecnici per un team di bot sviluppatori."},
+                {"role": "system", "content": "Sei un senior software architect. Il tuo compito è creare piani di sviluppo chiari, dettagliati e suddivisi in passi tecnici per un team di bot sviluppatori."},
                 {"role": "user", "content": prompt}
             ]
         )
