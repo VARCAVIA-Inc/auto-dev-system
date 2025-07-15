@@ -1,0 +1,14 @@
+- [ ] [shell-command] mkdir -p src
+- [ ] [shell-command] mkdir -p tests
+- [ ] [src/calculator.py] Definire la classe Calculator
+- [ ] [src/calculator.py] Implementare il metodo per addizione
+- [ ] [src/calculator.py] Implementare il metodo per sottrazione
+- [ ] [src/calculator.py] Implementare il metodo per moltiplicazione
+- [ ] [src/calculator.py] Implementare il metodo per divisione
+- [ ] [shell-command] Creare un file vuoto nel percorso 'src/__init__.py'
+- [ ] [tests/test_calculator.py] Scrivere test per il metodo di addizione
+- [ ] [tests/test_calculator.py] Scrivere test per il metodo di sottrazione
+- [ ] [tests/test_calculator.py] Scrivere test per il metodo di moltiplicazione
+- [ ] [tests/test_calculator.py] Scrivere test per il metodo di divisione
+- [ ] [shell-command] Installare il pacchetto pytest per eseguire i test
+- [ ] [shell-command] Eseguire i test e assicurarsi che tutti passino
