@@ -1,20 +1,17 @@
 import os
 import openai
 import yaml
-from src.utils.git_utils import push_changes_to_main # <-- MODIFICA QUI
+from src.utils.git_utils import push_changes_to_main
 
-# --- Variabili Globali e Inizializzazione ---
-# (Il resto delle funzioni di init e AI rimangono invariate)
 _openai_api_key = None
 _receiver_email = None
 _sender_email = None
 
 def init_project_bot_env(openai_api_key, receiver_email, sender_email, github_token):
-    global _openai_api_key, _receiver_email, _sender_email, _github_token
+    global _openai_api_key, _receiver_email, _sender_email
     _openai_api_key = openai_api_key
     _receiver_email = receiver_email
     _sender_email = sender_email
-    # Anche se non usato direttamente qui, lo passiamo per coerenza
     os.environ['GITHUB_TOKEN'] = github_token
     os.environ['GITHUB_USER'] = "VARCAVIA-Git"
     openai.api_key = openai_api_key
@@ -55,23 +52,24 @@ def update_business_plan_status(task_index, phase_index, new_status="planned"):
         print(f"Errore durante l'aggiornamento del Business Plan: {e}")
         return False
 
-# --- LOGICA PRINCIPALE DEL BOT (FASE 1) ---
 def run_project_bot(task_details, task_index, phase_index):
     task_description = task_details.get('description', 'N/A')
     print(f"Inizio FASE 1: Pianificazione per il task: '{task_description}'")
+    
     prompt_per_piano = (
         f"Dato l'obiettivo di alto livello: '{task_description}', crea un piano di sviluppo tecnico dettagliato. "
-        "Il piano deve essere in formato Markdown con una checklist di sotto-task. "
-        "Ogni sotto-task deve essere chiaro, specifico e implementabile da un bot sviluppatore. "
-        "Includi i file da creare, le funzioni da definire e i test da scrivere. "
-        "Inizia il piano con un titolo '# Piano di Sviluppo'."
+        "Il piano deve essere in formato Markdown con una checklist. "
+        "Ogni sotto-task DEVE iniziare con il percorso completo del file su cui operare, racchiuso tra parentesi quadre. "
+        "Esempio: '- [ ] [src/app/main.py] Creare la funzione di avvio'."
     )
+    
     print("Sto generando il piano di sviluppo con l'AI...")
     piano_generato = generate_response_with_ai(prompt_per_piano)
     if not piano_generato:
         print("Fallimento nella generazione del piano. Interruzione del task.")
         update_business_plan_status(task_index, phase_index, "planning_failed")
         return
+        
     print("Piano di sviluppo generato con successo.")
     repo_root = get_repo_root()
     plan_path = os.path.join(repo_root, 'development_plan.md')
@@ -82,8 +80,8 @@ def run_project_bot(task_details, task_index, phase_index):
     except Exception as e:
         print(f"Impossibile salvare il piano di sviluppo: {e}")
         return
+        
     update_business_plan_status(task_index, phase_index, "planned")
     commit_message = f"feat: Generato piano di sviluppo per '{task_description}'"
-    # Usa la funzione condivisa per il push
-    push_changes_to_main(repo_root, commit_message) # <-- MODIFICA QUI
+    push_changes_to_main(repo_root, commit_message)
     print(f"FASE 1 completata per il task: '{task_description}'.")

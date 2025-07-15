@@ -1,10 +1,8 @@
 name: Operator Bot Task Execution
 
 on:
-  # Questo workflow può essere avviato solo manualmente o via API/gh cli
   workflow_dispatch:
     inputs:
-      # Definiamo gli input che il Project_Bot dovrà fornire
       branch_name:
         description: 'Il nome del nuovo branch per questo task'
         required: true
@@ -37,12 +35,11 @@ jobs:
 
       - name: Run Operator Bot
         env:
-          # Passiamo gli input del workflow allo script Python
           BRANCH_NAME: ${{ github.event.inputs.branch_name }}
           TASK_DESCRIPTION: ${{ github.event.inputs.task_description }}
           COMMIT_MESSAGE: ${{ github.event.inputs.commit_message }}
-          # Passiamo i secret necessari
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
-          GITHUB_USER: "VARCAVIA-Git" # Utente associato al PAT
+          GITHUB_USER: "VARCAVIA-Git"
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: python src/operator_bot.py

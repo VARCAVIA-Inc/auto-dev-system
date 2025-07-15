@@ -6,9 +6,10 @@ on:
       - main
     paths-ignore:
       - '.autodev-trigger'
+      - 'development_plan.md'
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 * * * *' # Esegui ogni ora per supervisione
 
 jobs:
   run_manager_bot:
@@ -30,11 +31,13 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install PyYAML PyGithub secure-smtplib openai GitPython
+          pip install PyYAML PyGithub openai GitPython
 
       - name: Run Manager Bot
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
+          GITHUB_USER: "VARCAVIA-Git"
+          GITHUB_REPOSITORY: ${{ github.repository }}
           EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
           EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
           EMAIL_USERNAME: ${{ secrets.EMAIL_USERNAME }}
@@ -46,12 +49,9 @@ jobs:
         run: |
           python src/manager_bot.py
 
-  # --- NUOVO JOB DI NOTIFICA ---
   send_status_notification:
     runs-on: ubuntu-latest
-    # Esegui questo job sempre, anche se il precedente fallisce
     if: always()
-    # Esegui questo job dopo 'run_manager_bot'
     needs: [run_manager_bot]
     steps:
       - name: Checkout code
@@ -62,18 +62,15 @@ jobs:
         with:
           python-version: '3.9'
       
-      - name: Install email dependencies
+      - name: Install dependencies
         run: pip install secure-smtplib
 
       - name: Send workflow status email
         env:
-          # Passa lo stato del job precedente come variabile d'ambiente
           JOB_STATUS: ${{ needs.run_manager_bot.result }}
-          # Passa le altre variabili necessarie per lo script
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_RUN_ID: ${{ github.run_id }}
           GITHUB_WORKFLOW: ${{ github.workflow }}
-          # Passa i secret per l'invio della mail
           EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
           EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
           EMAIL_USERNAME: ${{ secrets.EMAIL_USERNAME }}
