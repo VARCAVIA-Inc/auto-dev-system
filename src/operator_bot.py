@@ -40,7 +40,6 @@ def main():
     print(f"Operator_Bot avviato sul branch '{branch_name}' per il task: '{task_description}'")
 
     try:
-        # Prepara il repository e il nuovo branch
         repo = Repo(repo_path)
         repo.git.config("user.name", "AutoDevSystem Bot")
         repo.git.config("user.email", "auto-dev-system@varcavia.com")
@@ -49,7 +48,6 @@ def main():
         new_branch.checkout()
         print(f"Creato e spostato sul nuovo branch: {branch_name}")
 
-        # --- LOGICA DI ESECUZIONE MIGLIORATA ---
         match = re.search(r'\[(.*?)\]', task_description)
         if not match:
             raise ValueError("Marcatore di tipo task non trovato. Formato atteso: '[tipo] Descrizione'.")
@@ -57,16 +55,11 @@ def main():
         task_type = match.group(1)
         action_description = task_description.replace(f'[{task_type}]', '').strip()
 
-        # CASO 1: Il task è un comando da shell
         if task_type == 'shell-command':
             print(f"Eseguo comando shell: '{action_description}'")
-            result = subprocess.run(action_description, shell=True, capture_output=True, text=True)
-            if result.returncode != 0:
-                raise Exception(f"Comando shell fallito: {result.stderr}")
+            subprocess.run(action_description, shell=True, check=True)
             print("Comando shell eseguito con successo.")
-            repo.git.add(all=True) # Aggiunge qualsiasi modifica risultante dal comando
-
-        # CASO 2: Il task è la creazione/modifica di un file
+            repo.git.add(all=True)
         else:
             file_path = task_type
             print(f"File target identificato: {file_path}")
@@ -84,7 +77,12 @@ def main():
             print(f"File '{file_path}' creato/aggiornato.")
             repo.git.add(full_path)
 
-        # Commit, Push, e PR (comune a entrambi i casi)
+        # --- NUOVA LOGICA DI CONTROLLO PRIMA DEL COMMIT ---
+        if not repo.index.diff("HEAD"):
+            print("Nessuna modifica rilevata da committare. Il task è considerato completo senza bisogno di una PR.")
+            # Esce con successo (exit code 0) senza fare altro.
+            return
+
         repo.git.commit('-m', commit_message)
         print(f"Commit creato con messaggio: '{commit_message}'")
         
