@@ -30,24 +30,26 @@ jobs:
         with:
           python-version: '3.9'
 
-      # --- AGGIUNTA CACHE ---
       - name: Cache pip packages
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          key: ${{ runner.os }}-pip-gemini-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
-            ${{ runner.os }}-pip-
+            ${{ runner.os }}-pip-gemini-
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install openai GitPython
+          pip install GitPython google-generativeai
 
       - name: Run Operator Bot
         env:
           BRANCH_NAME: ${{ github.event.inputs.branch_name }}
           TASK_DESCRIPTION: ${{ github.event.inputs.task_description }}
           COMMIT_MESSAGE: ${{ github.event.inputs.commit_message }}
-          # ... (altri secret ed env vars) ...
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
+          GITHUB_USER: "VARCAVIA-Git"
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: python src/operator_bot.py
