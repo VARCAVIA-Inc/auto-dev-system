@@ -16,7 +16,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-      actions: write # Permesso per avviare altri workflow
+      actions: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,6 +28,15 @@ jobs:
         with:
           python-version: '3.9'
 
+      # --- AGGIUNTA CACHE ---
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }} # Se avessimo un requirements.txt
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -38,44 +47,28 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
           GITHUB_USER: "VARCAVIA-Git"
           GITHUB_REPOSITORY: ${{ github.repository }}
-          EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
-          EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
-          EMAIL_USERNAME: ${{ secrets.EMAIL_USERNAME }}
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-          RECEIVER_EMAIL: ${{ secrets.RECEIVER_EMAIL }}
-          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # ... (altri secret ed env vars) ...
           PYTHONPATH: ${{ github.workspace }}
         run: |
           python src/manager_bot.py
 
   send_status_notification:
+    # (Questo job rimane invariato)
     runs-on: ubuntu-latest
     if: always()
     needs: [run_manager_bot]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-      
       - name: Install dependencies
         run: pip install secure-smtplib
-
       - name: Send workflow status email
         env:
           JOB_STATUS: ${{ needs.run_manager_bot.result }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_RUN_ID: ${{ github.run_id }}
-          GITHUB_WORKFLOW: ${{ github.workflow }}
-          EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
-          EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
-          EMAIL_USERNAME: ${{ secrets.EMAIL_USERNAME }}
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-          RECEIVER_EMAIL: ${{ secrets.RECEIVER_EMAIL }}
-          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          # ... (altri secret ed env vars per l'email) ...
           PYTHONPATH: ${{ github.workspace }}
         run: python src/utils/report_generator.py

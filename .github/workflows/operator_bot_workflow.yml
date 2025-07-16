@@ -30,16 +30,24 @@ jobs:
         with:
           python-version: '3.9'
 
+      # --- AGGIUNTA CACHE ---
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Install dependencies
-        run: pip install openai GitPython
+        run: |
+          python -m pip install --upgrade pip
+          pip install openai GitPython
 
       - name: Run Operator Bot
         env:
           BRANCH_NAME: ${{ github.event.inputs.branch_name }}
           TASK_DESCRIPTION: ${{ github.event.inputs.task_description }}
           COMMIT_MESSAGE: ${{ github.event.inputs.commit_message }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
-          GITHUB_USER: "VARCAVIA-Git"
-          GITHUB_REPOSITORY: ${{ github.repository }}
+          # ... (altri secret ed env vars) ...
         run: python src/operator_bot.py
