@@ -3,6 +3,7 @@ description: Sviluppo del sistema di generazione automatica del codice basato su
 phases:
 - name: Sviluppo Iniziale
   tasks:
-  - description: Creare un'applicazione calcolatrice base in Python con le quattro operazioni principali.
+  - description: Creare un'applicazione calcolatrice base in Python con le quattro
+      operazioni principali.
     agent: ProjectBot
-    status: pending
+    status: planned
