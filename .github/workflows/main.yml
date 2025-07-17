@@ -31,9 +31,10 @@ jobs:
         id: 'auth'
         uses: 'google-github-actions/auth@v2'
         with:
-          # QUESTA È LA RIGA CORRETTA
           workload_identity_provider: 'projects/776257662402/locations/global/workloadIdentityPools/varcavia-office-pool-v2/providers/github-provider'
           service_account: 'varcavia-office-agent@gemini-api-key-466122.iam.gserviceaccount.com'
+          # MODIFICA FINALE: Forziamo l'audience corretta
+          audience: 'https://iam.googleapis.com/projects/gemini-api-key-466122/locations/global/workloadIdentityPools/varcavia-office-pool-v2/providers/github-provider'
 
       - name: Set up Python
         uses: actions/setup-python@v5
