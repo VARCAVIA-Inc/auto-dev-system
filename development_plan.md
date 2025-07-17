@@ -6,7 +6,7 @@
 
 **Task:**
 
-- [ ] [shell-command] `mkdir docs` (Creazione della cartella 'docs' se non esiste)
+- [x] [shell-command] `mkdir docs` (Creazione della cartella 'docs' se non esiste)
 - [ ] [docs/README.md] Creare il file README.md all'interno della cartella 'docs'.
 - [ ] [docs/README.md] Aggiungere il titolo '# System Test' al file README.md.
 - [ ] [docs/README.md] Aggiungere il testo 'Hello, VARCAVIA-Office! The autonomous cycle is working.' al file README.md, sotto il titolo.

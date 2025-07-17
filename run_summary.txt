@@ -1,1 +1,1 @@
-Avviata pianificazione per il task: 'Create a README.md file in a new 'docs' folder. The file should contain the title '# System Test' and the text 'Hello, VARCAVIA-Office! The autonomous cycle is working.'.'.
+Supervisione e delega per il task pianificato: 'Create a README.md file in a new 'docs' folder. The file should contain the title '# System Test' and the text 'Hello, VARCAVIA-Office! The autonomous cycle is working.'.'.
