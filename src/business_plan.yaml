@@ -1,9 +1,7 @@
 phases:
-- name: Initial System Test
-  tasks:
-  - id: task_001
-    description: Create a README.md file in a new 'docs' folder. The file should contain
-      the title '# System Test' and the text 'Hello, VARCAVIA-Office! The autonomous
-      cycle is working.'.
-    agent: ProjectBot
-    status: planned
+  - name: "Phase 2: Security Hardening"
+    tasks:
+      - id: task_002
+        description: "Create a file named WIF_SUCCESS.md in the project root. The file content should be '# WIF Authentication Test' followed by 'System successfully authenticated using Workload Identity Federation.'."
+        agent: ProjectBot
+        status: pending

@@ -8,19 +8,15 @@ from src.utils.git_utils import push_changes_to_main
 def init_project_bot_env(github_token):
     os.environ['GITHUB_TOKEN'] = github_token
     os.environ['GITHUB_USER'] = "VARCAVIA-Git"
-    print("Project-Bot Environment Inizializzato.")
+    print("Project-Bot Environment Inizializzato (con Workload Identity).")
 
 def get_repo_root():
     return os.getenv('GITHUB_WORKSPACE', os.getcwd())
 
 def generate_response_with_ai(prompt, model="gemini-1.5-pro-latest"):
     try:
-        api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            raise ValueError("GEMINI_API_KEY non trovata nell'ambiente del Project Bot.")
-        
-        genai.configure(api_key=api_key)
-        
+        # MODIFICA: La configurazione delle credenziali non è più necessaria.
+        # La libreria rileva automaticamente le credenziali fornite dal workflow.
         gemini_model = genai.GenerativeModel(model)
         response = gemini_model.generate_content(prompt)
         return response.text
@@ -54,7 +50,6 @@ def run_project_bot(task_details, task_index, phase_index):
     except Exception as e:
         file_structure = f"Impossibile leggere la struttura dei file: {e}"
     
-    # MODIFICA: Regola critica aggiunta al prompt per comandi shell puliti.
     prompt_per_piano = (
         f"Considerando la seguente struttura di file e cartelle già esistente nel progetto:\n"
         f"```\n{file_structure}\n```\n\n"

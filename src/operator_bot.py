@@ -18,12 +18,8 @@ def generate_code_with_ai(task_description):
         f"Task: '{task_description}'"
     )
     try:
-        api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            raise ValueError("GEMINI_API_KEY non trovata nell'ambiente dell'Operator Bot.")
-        
-        genai.configure(api_key=api_key)
-
+        # MODIFICA: La configurazione delle credenziali non è più necessaria.
+        # La libreria rileva automaticamente le credenziali fornite dal workflow.
         model = genai.GenerativeModel('gemini-1.5-pro-latest')
         response = model.generate_content(prompt)
         cleaned_response = response.text.strip()
@@ -89,7 +85,6 @@ def main():
         repo.git.push(repo_url_auth, branch_name)
         print(f"Push del branch '{branch_name}' completato.")
         
-        # MODIFICA: Logica di creazione PR resa sicura contro la shell injection.
         pr_title = commit_message
         pr_body = f"Pull Request automatica per completare il task:\n`{task_description}`"
         

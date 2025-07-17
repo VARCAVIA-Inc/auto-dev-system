@@ -13,9 +13,8 @@ on:
       commit_message:
         description: 'Il messaggio di commit per questo task'
         required: true
-      api_key:
-        description: 'Gemini API Key for the operator'
-        required: true
+      # MODIFICA: L'input api_key non è più necessario
+      # api_key: ...
 
 jobs:
   execute_task:
@@ -23,11 +22,21 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      # Permesso FONDAMENTALE per Workload Identity Federation
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.BOT_GITHUB_TOKEN }}
+
+      # MODIFICA: Reintroduciamo l'autenticazione sicura a Google Cloud
+      - name: 'Authenticate to Google Cloud'
+        id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: 'projects/776257662402/locations/global/workloadIdentityPools/varcavia-office-pool/providers/github-provider'
+          service_account: 'varcavia-office-agent@gemini-api-key-466122.iam.gserviceaccount.com'
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -35,7 +44,6 @@ jobs:
           python-version: '3.9'
           cache: 'pip'
 
-      # MODIFICA: Usiamo requirements.txt per installare le dipendenze
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -46,7 +54,7 @@ jobs:
           BRANCH_NAME: ${{ github.event.inputs.branch_name }}
           TASK_DESCRIPTION: ${{ github.event.inputs.task_description }}
           COMMIT_MESSAGE: ${{ github.event.inputs.commit_message }}
-          GEMINI_API_KEY: ${{ github.event.inputs.api_key }}
+          # MODIFICA: La chiave API non è più necessaria
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
           GITHUB_USER: "VARCAVIA-Git"
           GITHUB_REPOSITORY: ${{ github.repository }}

@@ -8,26 +8,16 @@ from src.project_bot import run_project_bot, init_project_bot_env
 from src.utils.git_utils import push_changes_to_main
 
 def get_repo_root():
-    """Restituisce la root del repository."""
     return os.getenv('GITHUB_WORKSPACE', os.getcwd())
 
 def write_summary(message):
-    """Scrive un riassunto in un file per il job di notifica."""
     with open("run_summary.txt", "w") as f:
         f.write(message)
 
 def delegate_to_operator(task_line, main_task_description):
-    """
-    Attiva il workflow dell'Operator Bot tramite workflow_dispatch.
-    """
     repo_slug = os.getenv("GITHUB_REPOSITORY")
-    api_key = os.getenv("GEMINI_API_KEY")
-
     if not repo_slug:
         print("Errore: GITHUB_REPOSITORY non trovato.")
-        return False
-    if not api_key:
-        print("Errore: GEMINI_API_KEY non trovata nell'ambiente del Manager.")
         return False
         
     task_description = task_line.replace("- [ ]", "").strip()
@@ -39,12 +29,12 @@ def delegate_to_operator(task_line, main_task_description):
     print(f"Delego il task: '{task_description}' all'Operator Bot.")
     print(f"Nuovo branch: {branch_name}")
     
+    # MODIFICA: Il comando non passa più la chiave API
     command = [
         'gh', 'workflow', 'run', 'operator_bot_workflow.yml',
         '-f', f'branch_name={branch_name}',
         '-f', f'task_description={task_description}',
         '-f', f'commit_message={commit_message}',
-        '-f', f'api_key={api_key}',
         '--ref', 'main'
     ]
     
