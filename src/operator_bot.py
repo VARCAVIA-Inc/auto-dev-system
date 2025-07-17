@@ -26,7 +26,6 @@ def generate_code_with_ai(task_description):
 
         model = genai.GenerativeModel('gemini-1.5-pro-latest')
         response = model.generate_content(prompt)
-        # Pulisce l'output da eventuali ```
         cleaned_response = response.text.strip()
         if cleaned_response.startswith("```") and cleaned_response.endswith("```"):
              cleaned_response = '\n'.join(cleaned_response.split('\n')[1:-1])
@@ -75,8 +74,7 @@ def main():
             full_path = os.path.join(repo_path, file_path)
             os.makedirs(os.path.dirname(full_path), exist_ok=True)
             
-            with open(full_path, 'w') as f:
-                f.write(generated_content)
+            with open(full_path, 'w') as f: f.write(generated_content)
                 
             print(f"File '{file_path}' creato/aggiornato.")
             repo.git.add(full_path)
@@ -91,18 +89,24 @@ def main():
         repo.git.push(repo_url_auth, branch_name)
         print(f"Push del branch '{branch_name}' completato.")
         
+        # MODIFICA: Logica di creazione PR resa sicura contro la shell injection.
         pr_title = commit_message
         pr_body = f"Pull Request automatica per completare il task:\n`{task_description}`"
         
         env = os.environ.copy()
         env['GH_TOKEN'] = os.getenv("GITHUB_TOKEN")
-        gh_command = f'gh pr create --title "{pr_title}" --body "{pr_body}" --base main --head {branch_name}'
+        env['PR_TITLE'] = pr_title
+        env['PR_BODY'] = pr_body
+        
+        gh_command = f'gh pr create --title "$PR_TITLE" --body "$PR_BODY" --base main --head {branch_name}'
         
         result = subprocess.run(gh_command, shell=True, capture_output=True, text=True, env=env)
         if result.returncode == 0:
             print(f"Pull Request creata con successo: {result.stdout.strip()}")
         else:
-            raise Exception(f"Creazione Pull Request fallita: {result.stderr}")
+            print(f"Output del comando gh: {result.stdout}")
+            print(f"Errore del comando gh: {result.stderr}")
+            raise Exception(f"Creazione Pull Request fallita.")
             
     except Exception as e:
         print(f"Un errore è occorso durante l'esecuzione del task: {e}"); exit(1)

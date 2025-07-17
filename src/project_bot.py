@@ -54,6 +54,7 @@ def run_project_bot(task_details, task_index, phase_index):
     except Exception as e:
         file_structure = f"Impossibile leggere la struttura dei file: {e}"
     
+    # MODIFICA: Regola critica aggiunta al prompt per comandi shell puliti.
     prompt_per_piano = (
         f"Considerando la seguente struttura di file e cartelle già esistente nel progetto:\n"
         f"```\n{file_structure}\n```\n\n"
@@ -61,10 +62,11 @@ def run_project_bot(task_details, task_index, phase_index):
         f"**REGOLE FONDAMENTALI:**\n"
         f"1. **NON** creare file o cartelle che esistono già.\n"
         f"2. Ogni sotto-task che modifica o crea un file DEVE iniziare con il percorso del file tra parentesi quadre. Esempio: '- [ ] [src/calculator.py] Definire la classe Calculator'.\n"
-        f"3. Se un task è un'azione generica, usa '[shell-command]'. Esempio: '- [ ] [shell-command] pip install requests'.\n"
+        f"3. Se un task è un'azione generica, usa '[shell-command]'.\n"
+        f"4. **REGOLA CRITICA**: Per i task di tipo '[shell-command]', il testo che segue DEVE essere **SOLO ED ESCLUSIVAMENTE** il comando puro, valido ed eseguibile. NON includere commenti, spiegazioni o backtick. Esempio CORRETTO: '- [ ] [shell-command] mkdir -p docs'. Esempio ERRATO: '- [ ] [shell-command] `mkdir docs` (crea la cartella)'."
     )
     
-    print("Sto generando il piano di sviluppo con Gemini...")
+    print("Sto generando il piano di sviluppo con Gemini (con nuove regole)...")
     piano_generato = generate_response_with_ai(prompt_per_piano)
     if not piano_generato:
         print("Fallimento nella generazione del piano."); 
