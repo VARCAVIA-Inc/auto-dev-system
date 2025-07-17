@@ -1,0 +1,6 @@
+# requirements.txt
+PyYAML
+PyGithub
+google-generativeai
+GitPython
+secure-smtplib

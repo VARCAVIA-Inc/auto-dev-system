@@ -30,13 +30,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-          # MODIFICA: Aggiunto caching delle dipendenze
           cache: 'pip'
 
+      # MODIFICA: Usiamo requirements.txt per installare le dipendenze
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install PyYAML PyGithub google-generativeai GitPython
+          pip install -r requirements.txt
 
       - name: Run Manager Bot
         env:
@@ -68,8 +68,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
+          # Aggiungiamo il caching anche qui
+          cache: 'pip'
       - name: Install dependencies
-        run: pip install secure-smtplib
+        # E usiamo requirements.txt anche qui
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
       - name: Send workflow status email
         env:
           JOB_STATUS: ${{ needs.run_manager_bot.result }}
