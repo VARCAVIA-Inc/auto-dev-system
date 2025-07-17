@@ -19,36 +19,37 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      id-token: write # Permesso fondamentale
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.BOT_GITHUB_TOKEN }}
 
+      # --- NUOVA LOGICA DI AUTENTICAZIONE A GOOGLE CLOUD ---
+      - name: 'Authenticate to Google Cloud'
+        id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: 'projects/776257662402/locations/global/workloadIdentityPools/varcavia-office-pool/providers/github-provider'
+          service_account: 'varcavia-office-agent@gemini-api-key-466122.iam.gserviceaccount.com'
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
 
-      - name: Cache pip packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-gemini-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-gemini-
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install GitPython google-generativeai
+          pip install google-generativeai GitPython
 
       - name: Run Operator Bot
         env:
           BRANCH_NAME: ${{ github.event.inputs.branch_name }}
           TASK_DESCRIPTION: ${{ github.event.inputs.task_description }}
           COMMIT_MESSAGE: ${{ github.event.inputs.commit_message }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
           GITHUB_USER: "VARCAVIA-Git"
           GITHUB_REPOSITORY: ${{ github.repository }}
