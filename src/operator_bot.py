@@ -98,7 +98,7 @@ def main():
         env['PR_TITLE'] = pr_title
         env['PR_BODY'] = pr_body
         
-        gh_command = f'gh pr create --title "$PR_TITLE" --body "$PR_BODY" --base main --head {branch_name}'
+        gh_command = 'gh pr create --title "$PR_TITLE" --body "$PR_BODY" --base main --head "$BRANCH_NAME"'
         
         result = subprocess.run(gh_command, shell=True, capture_output=True, text=True, env=env)
         if result.returncode == 0:
