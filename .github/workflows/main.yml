@@ -19,7 +19,7 @@ jobs:
       actions: write
       id-token: write 
     outputs:
-      summary: ${{ steps.summary.outputs.summary_text }} # Dichiariamo l'output del job
+      summary: ${{ steps.summary.outputs.summary_text }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
           pip install PyYAML PyGithub google-generativeai GitPython google-auth-oauthlib
 
       - name: Run Manager Bot
-        id: manager_run # Diamo un ID a questo step
+        id: manager_run
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
           GITHUB_USER: "VARCAVIA-Git"
@@ -57,7 +57,6 @@ jobs:
         id: summary
         if: always()
         run: |
-          # Legge il riassunto da un file temporaneo creato dal bot
           if [[ -f run_summary.txt ]]; then
             echo "summary_text=$(cat run_summary.txt)" >> $GITHUB_OUTPUT
           else
@@ -80,7 +79,6 @@ jobs:
       - name: Send workflow status email
         env:
           JOB_STATUS: ${{ needs.run_manager_bot.result }}
-          # Riceviamo il riassunto dal job precedente
           RUN_SUMMARY: ${{ needs.run_manager_bot.outputs.summary }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_RUN_ID: ${{ github.run_id }}
