@@ -4,6 +4,6 @@
 
 **Task:**
 
-- [ ] [shell-command] mkdir docs
+- [x] [shell-command] mkdir docs
 - [ ] [docs/README.md] echo '# System Test' > docs/README.md
 - [ ] [docs/README.md] echo 'Hello, VARCAVIA-Office! The autonomous cycle is working.' >> docs/README.md
