@@ -1,8 +1,9 @@
-# src/business_plan.yaml
 phases:
-  - name: "Initial System Test"
-    tasks:
-      - id: task_001
-        description: "Create a README.md file in a new 'docs' folder. The file should contain the title '# System Test' and the text 'Hello, VARCAVIA-Office! The autonomous cycle is working.'."
-        agent: ProjectBot
-        status: pending
+- name: Initial System Test
+  tasks:
+  - id: task_001
+    description: Create a README.md file in a new 'docs' folder. The file should contain
+      the title '# System Test' and the text 'Hello, VARCAVIA-Office! The autonomous
+      cycle is working.'.
+    agent: ProjectBot
+    status: planned
