@@ -1,3 +1,4 @@
+# .github/workflows/operator_bot_workflow.yml
 name: Operator Bot Task Execution
 
 on:
@@ -12,6 +13,9 @@ on:
       commit_message:
         description: 'Il messaggio di commit per questo task'
         required: true
+      api_key:
+        description: 'Gemini API Key for the operator'
+        required: true
 
 jobs:
   execute_task:
@@ -19,21 +23,11 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-      id-token: write # Permesso fondamentale
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.BOT_GITHUB_TOKEN }}
-
-      # --- NUOVA LOGICA DI AUTENTICAZIONE A GOOGLE CLOUD ---
-      - name: 'Authenticate to Google Cloud'
-        id: 'auth'
-        uses: 'google-github-actions/auth@v2'
-        with:
-          workload_identity_provider: 'projects/776257662402/locations/global/workloadIdentityPools/varcavia-office-pool/providers/github-provider'
-          service_account: 'varcavia-office-agent@gemini-api-key-466122.iam.gserviceaccount.com'
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -50,6 +44,7 @@ jobs:
           BRANCH_NAME: ${{ github.event.inputs.branch_name }}
           TASK_DESCRIPTION: ${{ github.event.inputs.task_description }}
           COMMIT_MESSAGE: ${{ github.event.inputs.commit_message }}
+          GEMINI_API_KEY: ${{ github.event.inputs.api_key }}
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
           GITHUB_USER: "VARCAVIA-Git"
           GITHUB_REPOSITORY: ${{ github.repository }}

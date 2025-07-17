@@ -1,3 +1,4 @@
+# src/project_bot.py
 import os
 import yaml
 import google.generativeai as genai
@@ -5,18 +6,21 @@ import subprocess
 from src.utils.git_utils import push_changes_to_main
 
 def init_project_bot_env(github_token):
-    # L'autenticazione è automatica, impostiamo solo le variabili Git
     os.environ['GITHUB_TOKEN'] = github_token
     os.environ['GITHUB_USER'] = "VARCAVIA-Git"
-    print("Project-Bot Environment Inizializzato (con Workload Identity).")
+    print("Project-Bot Environment Inizializzato.")
 
 def get_repo_root():
     return os.getenv('GITHUB_WORKSPACE', os.getcwd())
 
 def generate_response_with_ai(prompt, model="gemini-1.5-pro-latest"):
     try:
-        # La configurazione delle credenziali non è più necessaria qui.
-        # La libreria rileva automaticamente le credenziali fornite dal workflow.
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY non trovata nell'ambiente del Project Bot.")
+        
+        genai.configure(api_key=api_key)
+        
         gemini_model = genai.GenerativeModel(model)
         response = gemini_model.generate_content(prompt)
         return response.text
@@ -63,16 +67,21 @@ def run_project_bot(task_details, task_index, phase_index):
     print("Sto generando il piano di sviluppo con Gemini...")
     piano_generato = generate_response_with_ai(prompt_per_piano)
     if not piano_generato:
-        print("Fallimento nella generazione del piano."); update_business_plan_status(task_index, phase_index, "planning_failed"); return
+        print("Fallimento nella generazione del piano."); 
+        update_business_plan_status(task_index, phase_index, "planning_failed")
+        return
         
     print("Piano di sviluppo generato.")
     plan_path = os.path.join(repo_root, 'development_plan.md')
     try:
-        with open(plan_path, 'w') as f: f.write(piano_generato)
+        with open(plan_path, 'w') as f:
+            f.write(piano_generato)
         print(f"Piano di sviluppo salvato in '{plan_path}'")
-    except Exception as e: print(f"Impossibile salvare il piano di sviluppo: {e}"); return
+    except Exception as e:
+        print(f"Impossibile salvare il piano di sviluppo: {e}")
+        return
         
     update_business_plan_status(task_index, phase_index, "planned")
-    commit_message = f"feat: Generato piano di sviluppo (con Gemini SA) per '{task_description}'"
+    commit_message = f"feat: Generato piano di sviluppo per '{task_description}'"
     push_changes_to_main(repo_root, commit_message)
     print(f"FASE 1 completata per il task: '{task_description}'.")

@@ -1,2 +1,0 @@
-Questo è un messaggio di benvenuto autogenerato per il file welcome.txt.
-La generazione AI è stata bypassata per diagnosticare un problema.
