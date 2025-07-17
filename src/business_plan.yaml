@@ -6,4 +6,4 @@ phases:
       the title '# System Test' and the text 'Hello, VARCAVIA-Office! The autonomous
       cycle is working.'.
     agent: ProjectBot
-    status: pending
+    status: planned
