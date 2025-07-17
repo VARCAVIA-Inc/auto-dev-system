@@ -17,15 +17,15 @@ jobs:
       contents: write
       pull-requests: write
       actions: write
-      # Permesso fondamentale per Workload Identity Federation
       id-token: write 
+    outputs:
+      summary: ${{ steps.summary.outputs.summary_text }} # Dichiariamo l'output del job
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.BOT_GITHUB_TOKEN }}
-
-      # --- NUOVA LOGICA DI AUTENTICAZIONE A GOOGLE CLOUD ---
+      
       - name: 'Authenticate to Google Cloud'
         id: 'auth'
         uses: 'google-github-actions/auth@v2'
@@ -44,23 +44,35 @@ jobs:
           pip install PyYAML PyGithub google-generativeai GitPython google-auth-oauthlib
 
       - name: Run Manager Bot
+        id: manager_run # Diamo un ID a questo step
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
           GITHUB_USER: "VARCAVIA-Git"
           GITHUB_REPOSITORY: ${{ github.repository }}
-          # NON passiamo più una chiave API, l'autenticazione è gestita dal passo precedente
           PYTHONPATH: ${{ github.workspace }}
         run: |
           python src/manager_bot.py
+
+      - name: Set run summary output
+        id: summary
+        if: always()
+        run: |
+          # Legge il riassunto da un file temporaneo creato dal bot
+          if [[ -f run_summary.txt ]]; then
+            echo "summary_text=$(cat run_summary.txt)" >> $GITHUB_OUTPUT
+          else
+            echo "summary_text=Nessuna azione specifica eseguita." >> $GITHUB_OUTPUT
+          fi
           
-  # Il job di notifica rimane invariato
   send_status_notification:
     runs-on: ubuntu-latest
     if: always()
     needs: [run_manager_bot]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
       - name: Install dependencies
@@ -68,6 +80,8 @@ jobs:
       - name: Send workflow status email
         env:
           JOB_STATUS: ${{ needs.run_manager_bot.result }}
+          # Riceviamo il riassunto dal job precedente
+          RUN_SUMMARY: ${{ needs.run_manager_bot.outputs.summary }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_RUN_ID: ${{ github.run_id }}
           GITHUB_WORKFLOW: ${{ github.workflow }}
