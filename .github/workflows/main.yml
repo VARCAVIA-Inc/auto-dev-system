@@ -33,8 +33,6 @@ jobs:
         with:
           workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ secrets.GCP_WIF_POOL }}/providers/${{ secrets.GCP_WIF_PROVIDER }}'
           service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
-          # --- CORREZIONE DEFINITIVA ---
-          # Specifichiamo esplicitamente l'audience per risolvere l'errore "invalid_request".
           audience: '//iam.googleapis.com/projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ secrets.GCP_WIF_POOL }}/providers/${{ secrets.GCP_WIF_PROVIDER }}'
 
       - name: Set up Python
@@ -59,10 +57,7 @@ jobs:
       - name: Run Manager Bot
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
-          GITHUB_USER: "VARCAVIA-Git"
-          GITHUB_REPOSITORY: ${{ github.repository }}
           PYTHONPATH: ${{ github.workspace }}
-          GOOGLE_API_USE_CLIENT_TIMEOUT: "1"
         run: |
           source .venv/bin/activate
           python src/manager_bot.py
