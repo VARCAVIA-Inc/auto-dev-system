@@ -5,10 +5,9 @@ from vertexai.generative_models import GenerativeModel
 
 # --- CONFIGURAZIONE CENTRALE AI ---
 PROJECT_ID = os.getenv('GCP_PROJECT')
-# CORREZIONE 1: Cambiamo la regione in una principale per l'AI in Europa
-LOCATION = "europe-west4"
+# MODIFICA FINALE: Usiamo la regione primaria per garantire la disponibilità del modello.
+LOCATION = "us-central1"
 
-# CORREZIONE 2: Usiamo i modelli più recenti e veloci
 PLANNING_MODEL = "gemini-1.5-flash-latest"
 EXECUTION_MODEL = "gemini-1.5-flash-latest"
 
