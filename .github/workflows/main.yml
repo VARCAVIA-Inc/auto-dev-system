@@ -31,6 +31,7 @@ jobs:
         id: 'auth'
         uses: 'google-github-actions/auth@v2'
         with:
+          # QUESTA CONFIGURAZIONE È ORA QUELLA CORRETTA E DEFINITIVA
           workload_identity_provider: 'projects/776257662402/locations/global/workloadIdentityPools/varcavia-office-pool-v2/providers/github-provider'
           service_account: 'varcavia-office-agent@gemini-api-key-466122.iam.gserviceaccount.com'
 
@@ -39,7 +40,6 @@ jobs:
         with:
           python-version: '3.9'
 
-      # MODIFICA: Caching avanzato per l'intero virtual environment
       - name: Restore or create venv cache
         id: cache-venv
         uses: actions/cache@v4
@@ -60,10 +60,8 @@ jobs:
           GITHUB_USER: "VARCAVIA-Git"
           GITHUB_REPOSITORY: ${{ github.repository }}
           PYTHONPATH: ${{ github.workspace }}
-          # MODIFICA: Forziamo la libreria a rispettare i timeout
           GOOGLE_API_USE_CLIENT_TIMEOUT: "1"
         run: |
-          # Attiviamo il venv dalla cache prima di eseguire lo script
           source .venv/bin/activate
           python src/manager_bot.py
 
@@ -78,7 +76,6 @@ jobs:
           fi
           
   send_status_notification:
-    # ... (La logica di notifica non necessita di modifiche sostanziali, ma per completezza ecco il file intero)
     runs-on: ubuntu-latest
     if: always()
     needs: [run_manager_bot]

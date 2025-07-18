@@ -1,7 +1,7 @@
 phases:
-  - name: "Phase 2: Security Hardening"
+  - name: "Phase 2.2: WIF Definitive Test"
     tasks:
-      - id: task_002
-        description: "Create a file named WIF_SUCCESS.md in the project root. The file content should be '# WIF Authentication Test' followed by 'System successfully authenticated using Workload Identity Federation.'."
+      - id: task_004
+        description: "Create a root file named FINAL_WIF_SUCCESS.md with the content '# WIF Authentication Successful'."
         agent: ProjectBot
         status: pending
