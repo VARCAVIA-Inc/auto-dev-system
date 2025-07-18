@@ -5,11 +5,14 @@ from vertexai.generative_models import GenerativeModel
 
 # --- CONFIGURAZIONE CENTRALE AI ---
 PROJECT_ID = os.getenv('GCP_PROJECT')
-LOCATION = "europe-west1"
+# CORREZIONE 1: Cambiamo la regione in una principale per l'AI in Europa
+LOCATION = "europe-west4"
 
-PLANNING_MODEL = "gemini-1.5-pro-latest"
-EXECUTION_MODEL = "gemini-1.5-flash-001"
+# CORREZIONE 2: Usiamo i modelli più recenti e veloci
+PLANNING_MODEL = "gemini-1.5-flash-latest"
+EXECUTION_MODEL = "gemini-1.5-flash-latest"
 
+# Variabile globale per tracciare lo stato dell'inizializzazione
 _is_vertex_ai_initialized = False
 _model_instances = {}
 
@@ -48,11 +51,7 @@ def generate_response(model: GenerativeModel, prompt: str) -> str:
     """
     try:
         logging.info(f"Invio richiesta al modello '{model._model_name}'...")
-        
-        # --- CORREZIONE FINALE ---
-        # Rimuoviamo i parametri di timeout e lasciamo che la libreria gestisca i default.
         response = model.generate_content(prompt)
-        # -------------------------
         
         if not response.candidates:
              raise ValueError("La risposta dell'API non contiene candidati validi.")
