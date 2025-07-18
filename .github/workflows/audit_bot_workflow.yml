@@ -1,16 +1,16 @@
 name: Audit Bot Supervision Cycle
 
 on:
-  workflow_dispatch: # Avvio manuale per ora
+  workflow_dispatch:
   schedule:
-    - cron: '0 2 * * *' # Esempio: ogni notte alle 2
+    - cron: '0 2 * * *'
 
 jobs:
   run_audit_bot:
     runs-on: ubuntu-latest
     permissions:
-      contents: read # Per ora legge solo il codice
-      id-token: write # Per la futura integrazione con GCP
+      contents: read
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -19,8 +19,8 @@ jobs:
         id: 'auth'
         uses: 'google-github-actions/auth@v2'
         with:
-          workload_identity_provider: 'projects/776257662402/locations/global/workloadIdentityPools/varcavia-github-pool/providers/varcavia-github-provider'
-          service_account: 'varcavia-office-sa@gemini-api-key-466122.iam.gserviceaccount.com'
+          workload_identity_provider: 'projects/826570341026/locations/global/workloadIdentityPools/varcavia-github-pool/providers/varcavia-github-provider'
+          service_account: 'varcavia-office-sa@varcavia-office-bc6xvv.iam.gserviceaccount.com'
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -36,7 +36,7 @@ jobs:
 
       - name: Run Audit Bot
         env:
-          GCP_PROJECT: 'gemini-api-key-466122'
+          GCP_PROJECT: 'varcavia-office-bc6xvv'
           PYTHONPATH: ${{ github.workspace }}
         run: |
           source .venv/bin/activate

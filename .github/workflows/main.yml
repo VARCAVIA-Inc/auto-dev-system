@@ -30,8 +30,8 @@ jobs:
         id: 'auth'
         uses: 'google-github-actions/auth@v2'
         with:
-          workload_identity_provider: 'projects/776257662402/locations/global/workloadIdentityPools/varcavia-github-pool/providers/varcavia-github-provider'
-          service_account: 'varcavia-office-sa@gemini-api-key-466122.iam.gserviceaccount.com'
+          workload_identity_provider: 'projects/826570341026/locations/global/workloadIdentityPools/varcavia-github-pool/providers/varcavia-github-provider'
+          service_account: 'varcavia-office-sa@varcavia-office-bc6xvv.iam.gserviceaccount.com'
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -48,7 +48,7 @@ jobs:
       - name: Run Manager Bot
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
-          GCP_PROJECT: 'gemini-api-key-466122'
+          GCP_PROJECT: 'varcavia-office-bc6xvv'
           PYTHONPATH: ${{ github.workspace }}
         run: |
           source .venv/bin/activate
