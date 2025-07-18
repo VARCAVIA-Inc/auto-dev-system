@@ -18,10 +18,10 @@ def generate_code_with_ai(task_description):
         f"Task: '{task_description}'"
     )
     try:
-        # MODIFICA: La configurazione delle credenziali non è più necessaria.
-        # La libreria rileva automaticamente le credenziali fornite dal workflow.
         model = genai.GenerativeModel('gemini-1.5-pro-latest')
-        response = model.generate_content(prompt)
+        # MODIFICA: Aggiunto un timeout esplicito di 120 secondi
+        request_options = {"timeout": 120}
+        response = model.generate_content(prompt, request_options=request_options)
         cleaned_response = response.text.strip()
         if cleaned_response.startswith("```") and cleaned_response.endswith("```"):
              cleaned_response = '\n'.join(cleaned_response.split('\n')[1:-1])

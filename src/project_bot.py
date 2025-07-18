@@ -15,10 +15,10 @@ def get_repo_root():
 
 def generate_response_with_ai(prompt, model="gemini-1.5-pro-latest"):
     try:
-        # MODIFICA: La configurazione delle credenziali non è più necessaria.
-        # La libreria rileva automaticamente le credenziali fornite dal workflow.
         gemini_model = genai.GenerativeModel(model)
-        response = gemini_model.generate_content(prompt)
+        # MODIFICA: Aggiunto un timeout esplicito di 120 secondi
+        request_options = {"timeout": 120}
+        response = gemini_model.generate_content(prompt, request_options=request_options)
         return response.text
     except Exception as e:
         print(f"Errore durante la chiamata a Gemini: {e}")
@@ -61,7 +61,7 @@ def run_project_bot(task_details, task_index, phase_index):
         f"4. **REGOLA CRITICA**: Per i task di tipo '[shell-command]', il testo che segue DEVE essere **SOLO ED ESCLUSIVAMENTE** il comando puro, valido ed eseguibile. NON includere commenti, spiegazioni o backtick. Esempio CORRETTO: '- [ ] [shell-command] mkdir -p docs'. Esempio ERRATO: '- [ ] [shell-command] `mkdir docs` (crea la cartella)'."
     )
     
-    print("Sto generando il piano di sviluppo con Gemini (con nuove regole)...")
+    print("Sto generando il piano di sviluppo con Gemini (timeout 120s)...")
     piano_generato = generate_response_with_ai(prompt_per_piano)
     if not piano_generato:
         print("Fallimento nella generazione del piano."); 
