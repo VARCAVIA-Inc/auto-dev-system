@@ -31,10 +31,9 @@ jobs:
         id: 'auth'
         uses: 'google-github-actions/auth@v2'
         with:
-          workload_identity_provider: 'projects/776257662402/locations/global/workloadIdentityPools/varcavia-office-pool-v2/providers/github-provider'
+          # MODIFICA DEFINITIVA: Usiamo l'ID del progetto come richiesto dal messaggio di errore.
+          workload_identity_provider: 'projects/gemini-api-key-466122/locations/global/workloadIdentityPools/varcavia-office-pool-v2/providers/github-provider'
           service_account: 'varcavia-office-agent@gemini-api-key-466122.iam.gserviceaccount.com'
-          # QUESTA È LA CORREZIONE DEFINITIVA E OBBLIGATORIA
-          audience: 'https://iam.googleapis.com/projects/gemini-api-key-466122/locations/global/workloadIdentityPools/varcavia-office-pool-v2/providers/github-provider'
 
       - name: Set up Python
         uses: actions/setup-python@v5
