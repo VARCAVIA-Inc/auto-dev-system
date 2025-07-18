@@ -1,78 +1,91 @@
-# src/operator_bot.py
 import os
-import google.generativeai as genai
-from git import Repo
+import logging
 import re
 import subprocess
-
-# MODIFICA: Configurazione globale di Gemini per performance e timeout
-try:
-    genai.configure(
-        transport="grpc",
-        request_timeout=120
-    )
-    print("Gemini client configured for gRPC with 120s timeout.")
-except Exception as e:
-    print(f"Could not configure Gemini client: {e}")
-
-
-def get_full_repo_url():
-    token = os.getenv("GITHUB_TOKEN")
-    user = os.getenv("GITHUB_USER")
-    repo_slug = os.getenv("GITHUB_REPOSITORY")
-    return f"https://{user}:{token}@github.com/{repo_slug}.git"
+from git import Repo
+from src.utils.logging_utils import setup_logging
+from src.utils.ai_utils import get_gemini_model, generate_response, EXECUTION_MODEL
 
 def generate_code_with_ai(task_description):
+    """Genera il codice o il contenuto per un task specifico."""
     prompt = (
-        f"Sei un bot sviluppatore. Il tuo unico obiettivo è scrivere il codice o il contenuto necessario per completare il seguente task. "
-        f"NON aggiungere spiegazioni o testo introduttivo. Fornisci solo il codice/contenuto richiesto, pronto per essere scritto in un file.\n\n"
-        f"Task: '{task_description}'"
+        f"Sei un OperatorBot, un bot sviluppatore esperto. Il tuo unico obiettivo è scrivere il codice o il contenuto necessario per completare il seguente task. "
+        f"NON aggiungere spiegazioni, commenti o testo introduttivo. Fornisci solo il codice/contenuto richiesto, pronto per essere scritto direttamente in un file.\n\n"
+        f"Task da eseguire: '{task_description}'"
     )
     try:
-        model = genai.GenerativeModel('gemini-1.5-pro-latest')
-        # La configurazione globale del timeout viene usata automaticamente
-        response = model.generate_content(prompt)
-        cleaned_response = response.text.strip()
-        if cleaned_response.startswith("```") and cleaned_response.endswith("```"):
-             cleaned_response = '\n'.join(cleaned_response.split('\n')[1:-1])
-        return cleaned_response
+        model = get_gemini_model(EXECUTION_MODEL)
+        generated_content = generate_response(model, prompt)
+        if generated_content:
+            # Pulisce il codice da eventuali blocchi di markdown
+            if generated_content.strip().startswith("```") and generated_content.strip().endswith("```"):
+                cleaned_content = '\n'.join(generated_content.strip().split('\n')[1:-1])
+                return cleaned_content
+            return generated_content.strip()
+        return None
     except Exception as e:
-        print(f"Errore durante la generazione del codice con Gemini: {e}")
+        logging.critical(f"Impossibile generare codice: {e}")
         return None
 
+def create_pull_request(branch_name, pr_title, pr_body):
+    """Crea una Pull Request usando la CLI di GitHub."""
+    try:
+        logging.info(f"Creazione della Pull Request per il branch '{branch_name}'...")
+        env = os.environ.copy()
+        env['GH_TOKEN'] = os.getenv("GITHUB_TOKEN")
+        
+        # Comando per creare la PR. L'opzione --fill usa il primo commit per titolo e corpo.
+        gh_command = f"gh pr create --base main --head \"{branch_name}\" --fill"
+        
+        result = subprocess.run(gh_command, shell=True, capture_output=True, text=True, check=True, env=env)
+        logging.info(f"✅ Pull Request creata con successo: {result.stdout.strip()}")
+        return True
+    except subprocess.CalledProcessError as e:
+        logging.error(f"❌ Creazione Pull Request fallita. Errore: {e.stderr}")
+        # Controlla se la PR esiste già
+        if "A pull request for" in e.stderr and "already exists" in e.stderr:
+            logging.warning("Una Pull Request per questo branch esiste già.")
+            return True
+        return False
+
 def main():
+    setup_logging()
     branch_name = os.getenv("BRANCH_NAME")
     task_description = os.getenv("TASK_DESCRIPTION")
     commit_message = os.getenv("COMMIT_MESSAGE")
-    repo_path = os.getcwd()
+    repo_path = os.getenv('GITHUB_WORKSPACE', os.getcwd())
 
     if not all([branch_name, task_description, commit_message]):
-        print("Errore: mancano delle variabili d'ambiente necessarie."); exit(1)
+        logging.critical("Errore: mancano le variabili d'ambiente necessarie (BRANCH_NAME, TASK_DESCRIPTION, COMMIT_MESSAGE)."); exit(1)
         
-    print(f"Operator_Bot (Gemini) avviato sul branch '{branch_name}' per il task: '{task_description}'")
+    logging.info(f"--- OperatorBot: Avviato sul branch '{branch_name}' per il task: '{task_description}' ---")
     
     try:
         repo = Repo(repo_path)
-        repo.git.config("user.name", "AutoDevSystem Bot")
-        repo.git.config("user.email", "auto-dev-system@varcavia.com")
+        repo.git.config("user.name", "VARCAVIA Office Bot")
+        repo.git.config("user.email", "bot@varcavia.com")
         
-        new_branch = repo.create_head(branch_name)
-        new_branch.checkout()
-        print(f"Creato e spostato sul nuovo branch: {branch_name}")
+        # Creazione e checkout del nuovo branch
+        if branch_name not in repo.heads:
+            new_branch = repo.create_head(branch_name)
+            new_branch.checkout()
+            logging.info(f"Creato e spostato sul nuovo branch: {branch_name}")
+        else:
+            repo.heads[branch_name].checkout()
+            logging.info(f"Spostato sul branch esistente: {branch_name}")
         
         match = re.search(r'\[(.*?)\]', task_description)
-        if not match: raise ValueError("Marcatore di tipo task non trovato.")
+        if not match: raise ValueError(f"Marcatore di tipo task non trovato in '{task_description}'.")
         
         task_type = match.group(1)
         action_description = task_description.replace(f'[{task_type}]', '').strip()
         
         if task_type == 'shell-command':
-            print(f"Eseguo comando shell: '{action_description}'")
-            subprocess.run(action_description, shell=True, check=True)
-            repo.git.add(all=True)
+            logging.info(f"Eseguo comando shell: '{action_description}'")
+            subprocess.run(action_description, shell=True, check=True, cwd=repo_path)
         else:
             file_path = task_type
-            print(f"File target identificato: {file_path}")
+            logging.info(f"File target identificato: {file_path}")
             
             generated_content = generate_code_with_ai(task_description)
             if generated_content is None: raise Exception("La generazione del contenuto AI è fallita.")
@@ -81,40 +94,28 @@ def main():
             os.makedirs(os.path.dirname(full_path), exist_ok=True)
             
             with open(full_path, 'w') as f: f.write(generated_content)
-                
-            print(f"File '{file_path}' creato/aggiornato.")
-            repo.git.add(full_path)
+            logging.info(f"File '{file_path}' creato/aggiornato.")
         
+        # Commit e Push
+        repo.git.add(all=True)
         if not repo.index.diff("HEAD"):
-            print("Nessuna modifica rilevata. Task completato senza PR."); return
+            logging.warning("Nessuna modifica rilevata. Task completato senza creare una PR."); return
             
         repo.git.commit('-m', commit_message)
-        print(f"Commit creato con messaggio: '{commit_message}'")
+        logging.info(f"Commit creato con messaggio: '{commit_message}'")
         
-        repo_url_auth = get_full_repo_url()
-        repo.git.push(repo_url_auth, branch_name)
-        print(f"Push del branch '{branch_name}' completato.")
+        # Push
+        origin = repo.remote(name='origin')
+        origin.push(refspec=f'{branch_name}:{branch_name}')
+        logging.info(f"Push del branch '{branch_name}' completato.")
         
-        pr_title = commit_message
-        pr_body = f"Pull Request automatica per completare il task:\n`{task_description}`"
-        
-        env = os.environ.copy()
-        env['GH_TOKEN'] = os.getenv("GITHUB_TOKEN")
-        env['PR_TITLE'] = pr_title
-        env['PR_BODY'] = pr_body
-        
-        gh_command = 'gh pr create --title "$PR_TITLE" --body "$PR_BODY" --base main --head "$BRANCH_NAME"'
-        
-        result = subprocess.run(gh_command, shell=True, capture_output=True, text=True, env=env)
-        if result.returncode == 0:
-            print(f"Pull Request creata con successo: {result.stdout.strip()}")
-        else:
-            print(f"Output del comando gh: {result.stdout}")
-            print(f"Errore del comando gh: {result.stderr}")
-            raise Exception(f"Creazione Pull Request fallita.")
-            
+        # Creazione Pull Request
+        create_pull_request(branch_name, commit_message, f"PR automatica per: {task_description}")
+
     except Exception as e:
-        print(f"Un errore è occorso durante l'esecuzione del task: {e}"); exit(1)
+        logging.critical(f"❌ Un errore è occorso durante l'esecuzione del task: {e}", exc_info=True); exit(1)
+
+    logging.info(f"--- OperatorBot: Task '{task_description}' completato con successo. ---")
 
 if __name__ == "__main__":
     main()

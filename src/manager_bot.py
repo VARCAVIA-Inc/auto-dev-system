@@ -1,11 +1,11 @@
-# src/manager_bot.py
 import os
 import yaml
 import subprocess
 import time
-from github import Github
-from src.project_bot import run_project_bot, init_project_bot_env
-from src.utils.git_utils import push_changes_to_main
+import logging
+from src.utils.git_utils import push_changes_to_branch
+from src.utils.logging_utils import setup_logging
+from src.project_bot import run_project_bot # Manteniamo l'import diretto
 
 def get_repo_root():
     return os.getenv('GITHUB_WORKSPACE', os.getcwd())
@@ -17,19 +17,17 @@ def write_summary(message):
 def delegate_to_operator(task_line, main_task_description):
     repo_slug = os.getenv("GITHUB_REPOSITORY")
     if not repo_slug:
-        print("Errore: GITHUB_REPOSITORY non trovato.")
+        logging.error("Errore: GITHUB_REPOSITORY non trovato.")
         return False
         
     task_description = task_line.replace("- [ ]", "").strip()
     
     timestamp = int(time.time())
-    branch_name = f"autodev-task-{timestamp}"
-    commit_message = f"feat: {task_description[:50]}"
+    branch_name = f"autodev/task-{timestamp}"
+    commit_message = f"feat: Implementa task '{task_description[:40]}...'"
 
-    print(f"Delego il task: '{task_description}' all'Operator Bot.")
-    print(f"Nuovo branch: {branch_name}")
+    logging.info(f"Delego il task: '{task_description}' all'Operator Bot sul branch '{branch_name}'.")
     
-    # MODIFICA: Il comando non passa più la chiave API
     command = [
         'gh', 'workflow', 'run', 'operator_bot_workflow.yml',
         '-f', f'branch_name={branch_name}',
@@ -40,40 +38,40 @@ def delegate_to_operator(task_line, main_task_description):
     
     try:
         subprocess.run(command, check=True, capture_output=True, text=True)
-        print("Workflow dell'Operator Bot attivato con successo.")
+        logging.info("✅ Workflow dell'Operator Bot attivato con successo.")
         return True
     except subprocess.CalledProcessError as e:
-        print(f"Errore durante l'attivazione del workflow dell'Operator Bot: {e.stderr}")
+        logging.error(f"❌ Errore durante l'attivazione del workflow dell'Operator Bot: {e.stderr}")
         return False
 
 def main():
-    print("Manager-Bot avviato.")
-    GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-    GITHUB_REPOSITORY = os.getenv("GITHUB_REPOSITORY")
-    
-    if not GITHUB_TOKEN or not GITHUB_REPOSITORY:
-        print("Errore: Variabili d'ambiente GITHUB_TOKEN o GITHUB_REPOSITORY non trovate.")
-        return
-
-    init_project_bot_env(github_token=GITHUB_TOKEN)
-    
-    business_plan_path = 'src/business_plan.yaml'
-    with open(business_plan_path, 'r') as file:
-        business_plan = yaml.safe_load(file)
+    setup_logging()
+    logging.info("--- ManagerBot: Avviato. Inizio supervisione del Business Plan. ---")
     
     repo_root = get_repo_root()
+    business_plan_path = os.path.join(repo_root, 'src', 'business_plan.yaml')
+    
+    try:
+        with open(business_plan_path, 'r') as file:
+            business_plan = yaml.safe_load(file)
+    except FileNotFoundError:
+        logging.critical(f"File business_plan.yaml non trovato in '{business_plan_path}'. Interruzione.")
+        write_summary("ERRORE: business_plan.yaml non trovato.")
+        return
 
     for phase_index, phase in enumerate(business_plan.get('phases', [])):
         for task_index, task in enumerate(phase.get('tasks', [])):
             task_status = task.get('status')
             task_description = task.get('description')
 
-            if task_status == 'pending' and task.get('agent') == 'ProjectBot':
+            if task_status == 'pending':
+                logging.info(f"Trovato task 'pending': '{task_description}'. Avvio del ProjectBot.")
                 write_summary(f"Avviata pianificazione per il task: '{task_description}'.")
                 run_project_bot(task, task_index, phase_index)
-                return
+                return # Esegue un solo task per run
 
             elif task_status == 'planned':
+                logging.info(f"Trovato task 'planned': '{task_description}'. Supervisione e delega.")
                 write_summary(f"Supervisione e delega per il task pianificato: '{task_description}'.")
                 plan_path = os.path.join(repo_root, 'development_plan.md')
                 
@@ -97,32 +95,36 @@ def main():
                                 f.writelines(lines)
                                 f.truncate()
                                 
-                                commit_msg = f"chore: Delegato task '{pending_sub_task_line.strip()}' all'operatore"
-                                push_changes_to_main(repo_root, commit_msg)
+                                commit_msg = f"chore(manager): Delegato task '{pending_sub_task_line.strip()[:40]}...'"
+                                push_changes_to_branch(repo_root, commit_msg, "main")
                                 write_summary(f"Delegato sotto-task all'Operator Bot. In attesa di PR.")
                             else:
                                 write_summary("Fallimento nella delega del sotto-task.")
-                            return
+                            return # Esegue una sola delega per run
                         
                         else:
-                            print(f"Tutti i sotto-task per '{task_description}' sono completati.")
+                            logging.info(f"Tutti i sotto-task per '{task_description}' sono completati.")
                             task['status'] = 'completed'
                             with open(business_plan_path, 'w') as bp_file:
                                 yaml.dump(business_plan, bp_file, default_flow_style=False, sort_keys=False)
                             
-                            commit_msg = f"feat: Completato task '{task_description}'"
-                            push_changes_to_main(repo_root, commit_msg)
+                            commit_msg_bp = f"feat(manager): Completato task '{task_description[:50]}...'"
+                            push_changes_to_branch(repo_root, commit_msg_bp, "main")
+                            
                             os.remove(plan_path)
-                            push_changes_to_main(repo_root, "chore: Rimosso piano di sviluppo completato")
+                            commit_msg_plan = "chore(manager): Rimosso piano di sviluppo completato"
+                            push_changes_to_branch(repo_root, commit_msg_plan, "main")
+                            
                             write_summary(f"Task '{task_description}' completato con successo.")
-                            return
+                            return # Esegue un solo completamento per run
                             
                 except FileNotFoundError:
-                    write_summary(f"Piano di sviluppo non trovato per '{task_description}'.")
+                    logging.error(f"Piano di sviluppo non trovato per il task 'planned': '{task_description}'.")
+                    write_summary(f"ERRORE: development_plan.md non trovato per un task pianificato.")
                     return
 
+    logging.info("Nessun task attivo (pending o planned) trovato nel business plan. In attesa del prossimo ciclo.")
     write_summary("Nessun task attivo (pending o planned) trovato nel business plan.")
-    print("Nessun task attivo (pending o planned) trovato.")
 
 if __name__ == "__main__":
     main()

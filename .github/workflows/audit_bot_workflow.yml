@@ -1,31 +1,20 @@
-name: Manager Bot Orchestration
+name: Audit Bot Supervision Cycle
 
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - 'development_plan.md'
-  workflow_dispatch:
+  workflow_dispatch: # Avvio manuale per ora
   schedule:
-    - cron: '0 * * * *'
+    - cron: '0 2 * * *' # Esempio: ogni notte alle 2
 
 jobs:
-  run_manager_bot:
+  run_audit_bot:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      pull-requests: write
-      actions: write 
-      id-token: write
-    outputs:
-      summary: ${{ steps.summary.outputs.summary_text }}
+      contents: read # Per ora legge solo il codice
+      id-token: write # Per la futura integrazione con GCP
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.BOT_GITHUB_TOKEN }}
-      
+
       - name: 'Authenticate to Google Cloud'
         id: 'auth'
         uses: 'google-github-actions/auth@v2'
@@ -45,21 +34,10 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Manager Bot
+      - name: Run Audit Bot
         env:
-          GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
           GCP_PROJECT: 'gemini-api-key-466122'
           PYTHONPATH: ${{ github.workspace }}
         run: |
           source .venv/bin/activate
-          python src/manager_bot.py
-
-      - name: Set run summary output
-        id: summary
-        if: always()
-        run: |
-          if [[ -f run_summary.txt ]]; then
-            echo "summary_text=$(cat run_summary.txt)" >> $GITHUB_OUTPUT
-          else
-            echo "summary_text=Nessuna azione specifica eseguita." >> $GITHUB_OUTPUT
-          fi
+          python src/audit_bot.py
