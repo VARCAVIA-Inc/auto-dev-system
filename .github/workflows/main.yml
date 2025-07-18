@@ -1,10 +1,8 @@
-# .github/workflows/main.yml
 name: Manager Bot Orchestration
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
     paths-ignore:
       - 'development_plan.md'
   workflow_dispatch:
@@ -17,28 +15,28 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-      actions: write 
+      actions: write
       id-token: write
-    outputs:
-      summary: ${{ steps.summary.outputs.summary_text }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.BOT_GITHUB_TOKEN }}
-      
-      - name: 'Authenticate to Google Cloud'
-        id: 'auth'
-        uses: 'google-github-actions/auth@v2'
+
+      - name: Google Auth
+        id: auth
+        uses: google-github-actions/auth@v2
         with:
-          # MODIFICA DEFINITIVA: Usiamo l'ID del progetto come richiesto dal messaggio di errore.
-          workload_identity_provider: 'projects/gemini-api-key-466122/locations/global/workloadIdentityPools/varcavia-office-pool-v2/providers/github-provider'
-          service_account: 'varcavia-office-agent@gemini-api-key-466122.iam.gserviceaccount.com'
+          workload_identity_provider: >
+            projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ secrets.GCP_WIF_POOL }}/providers/${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.11'
+          cache: 'pip'
 
       - name: Restore or create venv cache
         id: cache-venv
@@ -47,7 +45,7 @@ jobs:
           path: .venv
           key: venv-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
 
-      - name: Install dependencies (only if cache missed)
+      - name: Install deps (only if cache missed)
         if: steps.cache-venv.outputs.cache-hit != 'true'
         run: |
           python -m venv .venv
@@ -57,20 +55,10 @@ jobs:
       - name: Run Manager Bot
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
-          GITHUB_USER: "VARCAVIA-Git"
+          GITHUB_USER: VARCAVIA-Git
           GITHUB_REPOSITORY: ${{ github.repository }}
           PYTHONPATH: ${{ github.workspace }}
           GOOGLE_API_USE_CLIENT_TIMEOUT: "1"
         run: |
           source .venv/bin/activate
           python src/manager_bot.py
-
-      - name: Set run summary output
-        id: summary
-        if: always()
-        run: |
-          if [[ -f run_summary.txt ]]; then
-            echo "summary_text=$(cat run_summary.txt)" >> $GITHUB_OUTPUT
-          else
-            echo "summary_text=Nessuna azione specifica eseguita." >> $GITHUB_OUTPUT
-          fi
