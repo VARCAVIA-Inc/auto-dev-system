@@ -5,21 +5,17 @@ from vertexai.generative_models import GenerativeModel
 
 # --- CONFIGURAZIONE CENTRALE AI ---
 PROJECT_ID = os.getenv('GCP_PROJECT')
-LOCATION = "europe-west1"  # Regione per le API Vertex AI
+LOCATION = "europe-west1"
 
-# Modello per task complessi (pianificazione)
 PLANNING_MODEL = "gemini-1.5-pro-latest"
-# Modello per task veloci (generazione codice)
 EXECUTION_MODEL = "gemini-1.5-flash-001"
 
-# Variabile globale per tracciare lo stato dell'inizializzazione
 _is_vertex_ai_initialized = False
 _model_instances = {}
 
 def get_gemini_model(model_name: str) -> GenerativeModel:
     """
     Inizializza e restituisce un'istanza del modello Gemini specificato.
-    Usa un sistema di caching per non reinizializzare lo stesso modello.
     """
     global _is_vertex_ai_initialized, _model_instances
     
@@ -43,18 +39,20 @@ def get_gemini_model(model_name: str) -> GenerativeModel:
         return model
 
     except Exception as e:
-        logging.error(f"❌ Fallimento critico durante l'inizializzazione di Vertex AI o il caricamento del modello: {e}", exc_info=True)
+        logging.error(f"❌ Fallimento critico durante l'inizializzazione di Vertex AI: {e}", exc_info=True)
         raise
 
-def generate_response(model: GenerativeModel, prompt: str, timeout: int = 600) -> str:
+def generate_response(model: GenerativeModel, prompt: str) -> str:
     """
     Chiama il modello AI fornito per generare una risposta.
     """
     try:
-        logging.info(f"Invio richiesta al modello '{model._model_name}' (timeout: {timeout}s)...")
-        # CORREZIONE: Il timeout va passato tramite 'request_options'
-        request_options = {"timeout": float(timeout)}
-        response = model.generate_content(prompt, request_options=request_options)
+        logging.info(f"Invio richiesta al modello '{model._model_name}'...")
+        
+        # --- CORREZIONE FINALE ---
+        # Rimuoviamo i parametri di timeout e lasciamo che la libreria gestisca i default.
+        response = model.generate_content(prompt)
+        # -------------------------
         
         if not response.candidates:
              raise ValueError("La risposta dell'API non contiene candidati validi.")
