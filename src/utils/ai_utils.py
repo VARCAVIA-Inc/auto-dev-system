@@ -27,7 +27,6 @@ def get_gemini_model(model_name: str) -> GenerativeModel:
         return _model_instances[model_name]
 
     try:
-        # CONTROLLO CORRETTO: Eseguiamo l'init solo se non è già stato fatto.
         if not _is_vertex_ai_initialized:
             if not PROJECT_ID:
                 logging.error("La variabile d'ambiente GCP_PROJECT non è impostata nel workflow.")
@@ -35,7 +34,7 @@ def get_gemini_model(model_name: str) -> GenerativeModel:
             
             logging.info(f"Prima inizializzazione di Vertex AI per il progetto '{PROJECT_ID}' in '{LOCATION}'...")
             vertexai.init(project=PROJECT_ID, location=LOCATION)
-            _is_vertex_ai_initialized = True # Marca come inizializzato
+            _is_vertex_ai_initialized = True
             logging.info("✅ Connessione a Vertex AI stabilita con successo.")
 
         logging.info(f"Caricamento del modello AI: {model_name}")
@@ -53,8 +52,9 @@ def generate_response(model: GenerativeModel, prompt: str, timeout: int = 600) -
     """
     try:
         logging.info(f"Invio richiesta al modello '{model._model_name}' (timeout: {timeout}s)...")
-        generation_config = {"request_timeout": float(timeout)}
-        response = model.generate_content(prompt, generation_config=generation_config)
+        # CORREZIONE: Il timeout va passato tramite 'request_options'
+        request_options = {"timeout": float(timeout)}
+        response = model.generate_content(prompt, request_options=request_options)
         
         if not response.candidates:
              raise ValueError("La risposta dell'API non contiene candidati validi.")
