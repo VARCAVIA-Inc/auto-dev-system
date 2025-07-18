@@ -29,7 +29,6 @@ jobs:
       - name: Read Trigger File and Prepare Git Operations
         id: read_trigger
         run: |
-          # ... (contenuto del passo invariato) ...
           if [ ! -f ".autodev-trigger" ]; then
             echo "::error::Trigger file .autodev-trigger not found. Exiting."
             exit 1
@@ -62,7 +61,6 @@ jobs:
                        --head ${{ steps.read_trigger.outputs.NEW_BRANCH_NAME }} \
                        --base main
 
-  # --- NUOVO JOB DI NOTIFICA ---
   send_status_notification:
     runs-on: ubuntu-latest
     if: always()

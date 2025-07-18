@@ -1,16 +1,17 @@
+# .github/workflows/operator_bot_workflow.yml
 name: Operator Bot Task Execution
 
 on:
   workflow_dispatch:
     inputs:
       branch_name:
-        description: 'Nuovo branch per questo task'
+        description: 'Il nome del nuovo branch per questo task'
         required: true
       task_description:
-        description: 'Descrizione del task'
+        description: 'La descrizione del singolo task da eseguire'
         required: true
       commit_message:
-        description: 'Messaggio di commit'
+        description: 'Il messaggio di commit per questo task'
         required: true
 
 jobs:
@@ -20,26 +21,23 @@ jobs:
       contents: write
       pull-requests: write
       id-token: write
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.BOT_GITHUB_TOKEN }}
 
-      - name: Google Auth
-        id: auth
-        uses: google-github-actions/auth@v2
+      - name: 'Authenticate to Google Cloud'
+        id: 'auth'
+        uses: 'google-github-actions/auth@v2'
         with:
-          workload_identity_provider: >
-            projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ secrets.GCP_WIF_POOL }}/providers/${{ secrets.GCP_WIF_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ secrets.GCP_WIF_POOL }}/providers/${{ secrets.GCP_WIF_PROVIDER }}'
+          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          cache: 'pip'
+          python-version: '3.9'
 
       - name: Restore or create venv cache
         id: cache-venv
@@ -48,7 +46,7 @@ jobs:
           path: .venv
           key: venv-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
 
-      - name: Install deps (only if cache missed)
+      - name: Install dependencies (only if cache missed)
         if: steps.cache-venv.outputs.cache-hit != 'true'
         run: |
           python -m venv .venv
@@ -61,9 +59,8 @@ jobs:
           TASK_DESCRIPTION: ${{ github.event.inputs.task_description }}
           COMMIT_MESSAGE: ${{ github.event.inputs.commit_message }}
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
-          GITHUB_USER: VARCAVIA-Git
+          GITHUB_USER: "VARCAVIA-Git"
           GITHUB_REPOSITORY: ${{ github.repository }}
-          PYTHONPATH: ${{ github.workspace }}
           GOOGLE_API_USE_CLIENT_TIMEOUT: "1"
         run: |
           source .venv/bin/activate
