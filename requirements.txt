@@ -4,3 +4,4 @@ PyGithub
 google-generativeai
 GitPython
 secure-smtplib
+grpcio

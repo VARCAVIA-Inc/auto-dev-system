@@ -5,6 +5,16 @@ import google.generativeai as genai
 import subprocess
 from src.utils.git_utils import push_changes_to_main
 
+# MODIFICA: Configurazione globale di Gemini per performance e timeout
+try:
+    genai.configure(
+        transport="grpc",
+        request_timeout=120
+    )
+    print("Gemini client configured for gRPC with 120s timeout.")
+except Exception as e:
+    print(f"Could not configure Gemini client: {e}")
+
 def init_project_bot_env(github_token):
     os.environ['GITHUB_TOKEN'] = github_token
     os.environ['GITHUB_USER'] = "VARCAVIA-Git"
@@ -16,9 +26,8 @@ def get_repo_root():
 def generate_response_with_ai(prompt, model="gemini-1.5-pro-latest"):
     try:
         gemini_model = genai.GenerativeModel(model)
-        # MODIFICA: Aggiunto un timeout esplicito di 120 secondi
-        request_options = {"timeout": 120}
-        response = gemini_model.generate_content(prompt, request_options=request_options)
+        # La configurazione globale del timeout viene usata automaticamente
+        response = gemini_model.generate_content(prompt)
         return response.text
     except Exception as e:
         print(f"Errore durante la chiamata a Gemini: {e}")
@@ -61,7 +70,7 @@ def run_project_bot(task_details, task_index, phase_index):
         f"4. **REGOLA CRITICA**: Per i task di tipo '[shell-command]', il testo che segue DEVE essere **SOLO ED ESCLUSIVAMENTE** il comando puro, valido ed eseguibile. NON includere commenti, spiegazioni o backtick. Esempio CORRETTO: '- [ ] [shell-command] mkdir -p docs'. Esempio ERRATO: '- [ ] [shell-command] `mkdir docs` (crea la cartella)'."
     )
     
-    print("Sto generando il piano di sviluppo con Gemini (timeout 120s)...")
+    print("Sto generando il piano di sviluppo con Gemini...")
     piano_generato = generate_response_with_ai(prompt_per_piano)
     if not piano_generato:
         print("Fallimento nella generazione del piano."); 

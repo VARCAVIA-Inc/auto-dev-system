@@ -5,6 +5,17 @@ from git import Repo
 import re
 import subprocess
 
+# MODIFICA: Configurazione globale di Gemini per performance e timeout
+try:
+    genai.configure(
+        transport="grpc",
+        request_timeout=120
+    )
+    print("Gemini client configured for gRPC with 120s timeout.")
+except Exception as e:
+    print(f"Could not configure Gemini client: {e}")
+
+
 def get_full_repo_url():
     token = os.getenv("GITHUB_TOKEN")
     user = os.getenv("GITHUB_USER")
@@ -19,9 +30,8 @@ def generate_code_with_ai(task_description):
     )
     try:
         model = genai.GenerativeModel('gemini-1.5-pro-latest')
-        # MODIFICA: Aggiunto un timeout esplicito di 120 secondi
-        request_options = {"timeout": 120}
-        response = model.generate_content(prompt, request_options=request_options)
+        # La configurazione globale del timeout viene usata automaticamente
+        response = model.generate_content(prompt)
         cleaned_response = response.text.strip()
         if cleaned_response.startswith("```") and cleaned_response.endswith("```"):
              cleaned_response = '\n'.join(cleaned_response.split('\n')[1:-1])
