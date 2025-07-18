@@ -96,3 +96,4 @@ jobs:
           SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
           PYTHONPATH: ${{ github.workspace }}
         run: python src/utils/report_generator.py
+        
