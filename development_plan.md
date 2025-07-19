@@ -44,7 +44,7 @@ Centralizzeremo la logica di generazione dei test in un nuovo modulo di utility 
     ```python
     from src.utils import ai_utils
     ```
-- [ ] [src/utils/test_utils.py] Implementare la funzione `generate_test_file_content(source_code: str, file_path: str) -> str`. Questa funzione:
+- [x] [src/utils/test_utils.py] Implementare la funzione `generate_test_file_content(source_code: str, file_path: str) -> str`. Questa funzione:
     1.  Prende in input il codice sorgente di un file Python e il suo percorso.
     2.  Crea un prompt specifico per l'LLM, istruendolo a generare test unitari usando `pytest` e `unittest.mock`. Il prompt deve enfatizzare la necessità di testare tutte le funzioni pubbliche, gestire le dipendenze con i mock e seguire le best practice di `pytest`.
     3.  Invoca `ai_utils.get_completion()` con il prompt.
