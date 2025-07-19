@@ -26,7 +26,7 @@ L'obiettivo di questa fase è strutturare il progetto per supportare i test e ag
     pytest
     pytest-mock
     ```
-- [ ] [.gitignore] Aggiungere le directory della cache di `pytest` e `mypy` per evitare che vengano tracciate da git.
+- [x] [.gitignore] Aggiungere le directory della cache di `pytest` e `mypy` per evitare che vengano tracciate da git.
     ```
     # Pytest
     .pytest_cache/
