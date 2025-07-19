@@ -1,21 +1,23 @@
-project_name: VARCAVIA Office MVP
-description: Ciclo di test iniziale per l'infrastruttura di sviluppo autonomo.
+project_name: VARCAVIA Office - Fase 2
+description: "Missione di auto-miglioramento per implementare il ciclo di Test-Driven Development autonomo."
+
 core_principles:
-- 'Principio 1: Eseguire un task alla volta.'
-- "Principio 2: Fallire velocemente, imparare pi\xF9 velocemente."
+  - "Ogni nuova funzionalità deve essere accompagnata da test."
+  - "Il codice non viene integrato se i test non passano."
+
 operating_model:
-- name: Manager_Bot
-  role: CEO Strategico
-- name: Project_Bot
-  role: CTO
-- name: Operator_Bot
-  role: Sviluppatore
-- name: Audit_Bot
-  role: QA
+  - name: Manager_Bot
+    role: "CEO Strategico"
+  - name: Project_Bot
+    role: "CTO"
+  - name: Operator_Bot
+    role: "Sviluppatore"
+  - name: Audit_Bot
+    role: "QA"
+
 phases:
-- name: 'Fase 1: Test di Funzionamento End-to-End'
-  tasks:
-  - description: Creare un file di test chiamato 'TEST_SUCCESS.md' nella root del
-      progetto con il contenuto '# Ciclo Autonomo Completato'.
-    agent: ManagerBot
-    status: planned
+  - name: "Fase 2.1: Implementazione TDD Autonomo"
+    tasks:
+      - description: "Potenziare il ProjectBot per generare un file di test unitario (`*_test.py`) per ogni nuovo file Python. Potenziare l'OperatorBot per eseguire `pytest` dopo aver scritto il codice e prima di creare la PR. Il workflow dell'OperatorBot deve fallire se i test non passano."
+        agent: ManagerBot
+        status: pending
