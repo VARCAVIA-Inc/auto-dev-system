@@ -1,21 +1,68 @@
-# VARCAVIA Office - Autonomous Development System (MVP)
+# VARCAVIA Office – Autonomous Development System (MVP)
 
-Questo repository contiene l'infrastruttura per **VARCAVIA Office**, un sistema di sviluppo software autonomo. Partendo da un obiettivo di business definito in un file `business_plan.yaml`, l'organizzazione di bot collabora per pianificare, sviluppare, e committare il codice necessario per raggiungere l'obiettivo.
+> **Fast start**
+>
+> 1. Abilita **Generative AI** in Vertex AI Studio sul progetto Google Cloud.
+> 2. Avvia Codespace e lancia `./scripts/vertex_check.sh`.
+> 3. Se il ping risponde “Pong!”, sei operativo.
+
+Questo repository contiene l'infrastruttura per **VARCAVIA Office**, un sistema di sviluppo software autonomo. Partendo da un obiettivo di business definito in `business_plan.yaml`, un gruppo di bot collabora per pianificare, sviluppare e committare il codice necessario per raggiungere l'obiettivo.
 
 ## Architettura
 
-Il sistema è composto da un'organizzazione di bot specializzati, ognuno con un ruolo definito:
+Il sistema è composto da bot specializzati, ognuno con un ruolo preciso:
 
--   **ManagerBot**: Il CEO strategico. Legge il `business_plan.yaml`, orchestra il flusso di lavoro e delega i compiti agli altri bot.
--   **ProjectBot**: Il CTO. Riceve un obiettivo di business dal ManagerBot e lo traduce in un piano di sviluppo tecnico dettagliato (`development_plan.md`).
--   **OperatorBot**: Lo Sviluppatore. Riceve un singolo task tecnico dal ManagerBot (preso dal piano di sviluppo) e lo esegue: scrive codice, esegue comandi e crea Pull Request.
--   **AuditBot**: Il Supervisore QA. In futuro, analizzerà la qualità, i costi e la coerenza del lavoro svolto, fornendo feedback strategico al ManagerBot.
+* **ManagerBot** (C-level strategist) – legge `business_plan.yaml`, orchestra il flusso di lavoro e delega compiti.
+* **ProjectBot** (CTO) – riceve l’obiettivo business e crea un piano tecnico dettagliato (`development_plan.md`).
+* **OperatorBot** (Developer) – esegue i task tecnici: scrive codice, esegue comandi, apre PR.
+* **AuditBot** (QA Supervisor) – analizza qualità, costi e coerenza, fornendo feedback al ManagerBot.
 
-## Attivazione
+## Attivazione & Setup
 
-1.  **Configura Google Cloud**: Assicurati di avere un progetto Google Cloud con un account di fatturazione attivo e l'API Vertex AI (`aiplatform.googleapis.com`) abilitata.
-2.  **Crea le Risorse**: Segui le istruzioni per creare il Service Account e il Workload Identity Pool, come fatto in precedenza.
-3.  **Aggiorna i Workflow**: Inserisci i tuoi ID corretti (`project_number`, `project_id`, `service_account`) nei file `.github/workflows/*.yml`.
-4.  **Crea il Segreto GitHub**: Crea un [Fine-grained personal access token](https://github.com/settings/tokens?type=beta) con permessi di lettura/scrittura su `Contents` e `Pull Requests` per questo repository. Salvalo nei segreti del repository con il nome `BOT_GITHUB_TOKEN`.
-5.  **Definisci la Missione**: Modifica `src/business_plan.yaml` per definire il primo task del tuo progetto.
-6.  **Push**: Fai un push sul branch `main` per attivare il ManagerBot.
+1. **Configura Google Cloud**
+
+   * Crea (o usa) un progetto con billing attivo.
+   * Abilita l’API **Vertex AI** (`aiplatform.googleapis.com`).
+   * **Passo critico:** in Vertex AI Studio clicca **Enable Generative AI Tools**. Senza questo “feature flag” i modelli Gemini restano invisibili.
+2. **Crea le risorse cloud**
+
+   * Service Account: `vertex-client@<project>.iam.gserviceaccount.com` con `roles/aiplatform.user`.
+   * Workload Identity Pool & Provider collegati a GitHub, con i ruoli `iam.workloadIdentityUser` e `iam.serviceAccountTokenCreator`.
+3. **Aggiorna i workflow GitHub Actions**
+
+   * Inserisci `project_number`, `project_id`, e l’email della Service Account nei file `.github/workflows/*.yml`.
+4. **Crea il segreto GitHub**
+
+   * Fine‑grained PAT con accesso `Contents`+`Pull Requests`. Salvalo come `BOT_GITHUB_TOKEN`.
+5. **Configura Codespace**
+
+   * Esegui lo script di setup:
+
+     ```bash
+     sudo apt-get update && sudo apt-get --only-upgrade install -y google-cloud-cli
+     ./scripts/vertex_auth_config.sh   # crea/patcha ADC e impersonazione SA
+     ./scripts/vertex_check.sh         # health‑check completo
+     ```
+6. **Definisci la missione**
+
+   * Modifica `src/business_plan.yaml` per impostare il primo obiettivo.
+7. **Push**
+
+   * Commit & push su `main` → parte il ManagerBot.
+
+## Script utili
+
+* `scripts/vertex_auth_config.sh` – login, patch ADC con `quota_project_id`, set SA impersonation.
+* `scripts/vertex_check.sh` – stampa lo stato API, controlla i modelli Gemini disponibili, esegue un test `generateContent`.
+
+## FAQ lampo
+
+| Domanda                                         | Risposta                                                                 |
+| ----------------------------------------------- | ------------------------------------------------------------------------ |
+| Perché vedo 404 su `/publishers/google/models`? | Non hai cliccato **Enable Generative AI** sul progetto.                  |
+| Perché `:predict` fallisce?                     | Gemini usa i nuovi metodi `:generateContent` / `:streamGenerateContent`. |
+| La CLI non riconosce `publisher-models`         | Aggiorna a **gcloud ≥ 530** oppure usa la REST.                          |
+
+---
+
+© 2025 Varcavia Inc. Tutti i diritti riservati.
