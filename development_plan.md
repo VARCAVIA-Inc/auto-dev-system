@@ -55,7 +55,7 @@ Centralizzeremo la logica di generazione dei test in un nuovo modulo di utility 
 
 Modificheremo il `ProjectBot` per includere la creazione dei file di test nel piano tecnico che genera.
 
-- [ ] [src/bots/project_bot.py] Importare la nuova utility di generazione test: `from src.utils.test_utils import generate_test_file_content`.
+- [x] [src/bots/project_bot.py] Importare la nuova utility di generazione test: `from src.utils.test_utils import generate_test_file_content`.
 - [ ] [src/bots/project_bot.py] Modificare il metodo che genera il piano tecnico. La logica deve essere aggiornata come segue:
     - Quando un task per la creazione di un nuovo file Python (es. `[src/bots/new_bot.py]`) viene generato, il `ProjectBot` deve:
         1. Generare il contenuto del codice per `new_bot.py`.
