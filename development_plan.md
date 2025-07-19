@@ -84,7 +84,7 @@ Modificheremo l'`OperatorBot` per eseguire i test e condizionare il workflow al 
 
 - [x] [src/bots/operator_bot.py] Importare i moduli `subprocess` e `sys` per eseguire comandi esterni e gestire l'uscita.
 - [x] [src/bots/operator_bot.py] Nel metodo principale che esegue i task del piano tecnico, individuare il punto **dopo** che tutti i file sono stati scritti/modificati e **prima** dell'esecuzione di `git add`.
-- [ ] [src/bots/operator_bot.py] Inserire una nuova funzione o blocco di codice per eseguire i test. Questo blocco deve:
+- [x] [src/bots/operator_bot.py] Inserire una nuova funzione o blocco di codice per eseguire i test. Questo blocco deve:
     1.  Eseguire il comando `pytest` usando `subprocess.run()`. Assicurarsi di catturare `stdout`, `stderr` e il codice di ritorno.
     2.  Controllare il `returncode` del processo.
     3.  **Se il `returncode` è diverso da 0:**
