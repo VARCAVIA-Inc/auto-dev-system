@@ -3,11 +3,13 @@ import logging
 import vertexai
 from vertexai.generative_models import GenerativeModel
 
+# --- CONFIGURAZIONE CENTRALE AI (FINALE) ---
 PROJECT_ID = os.getenv('GCP_PROJECT')
-LOCATION = "us-central1"  # Regione più stabile per la disponibilità dei modelli
+LOCATION = "global"  # Obbligatorio per i modelli più recenti
 
-PLANNING_MODEL = "gemini-1.5-flash-latest"
-EXECUTION_MODEL = "gemini-1.5-flash-latest"
+# Modelli aggiornati alla versione 2.5
+PLANNING_MODEL = "gemini-2.5-pro"
+EXECUTION_MODEL = "gemini-2.5-flash"
 
 _is_vertex_ai_initialized = False
 _model_instances = {}
