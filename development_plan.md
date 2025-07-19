@@ -21,7 +21,7 @@ L'obiettivo di questa fase è strutturare il progetto per supportare i test e ag
 
 - [x] [shell-command] `mkdir tests`
 - [x] [shell-command] `touch tests/__init__.py`
-- [ ] [requirements.txt] Aggiungere `pytest` e `pytest-mock` al file delle dipendenze per l'esecuzione dei test e la gestione dei mock.
+- [x] [requirements.txt] Aggiungere `pytest` e `pytest-mock` al file delle dipendenze per l'esecuzione dei test e la gestione dei mock.
     ```
     pytest
     pytest-mock
