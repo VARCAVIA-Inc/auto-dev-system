@@ -39,7 +39,7 @@ L'obiettivo di questa fase è strutturare il progetto per supportare i test e ag
 
 Centralizzeremo la logica di generazione dei test in un nuovo modulo di utility per mantenere il codice pulito e modulare.
 
-- [ ] [src/utils/test_utils.py] Creare un nuovo file per le utility di generazione dei test.
+- [x] [src/utils/test_utils.py] Creare un nuovo file per le utility di generazione dei test.
 - [ ] [src/utils/test_utils.py] Importare le dipendenze necessarie, inclusa la nostra utility AI.
     ```python
     from src.utils import ai_utils
