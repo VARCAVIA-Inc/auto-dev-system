@@ -1,23 +1,24 @@
 project_name: VARCAVIA Office - Fase 2
-description: "Missione di auto-miglioramento per implementare il ciclo di Test-Driven Development autonomo."
-
+description: Missione di auto-miglioramento per implementare il ciclo di Test-Driven
+  Development autonomo.
 core_principles:
-  - "Ogni nuova funzionalità deve essere accompagnata da test."
-  - "Il codice non viene integrato se i test non passano."
-
+- "Ogni nuova funzionalit\xE0 deve essere accompagnata da test."
+- Il codice non viene integrato se i test non passano.
 operating_model:
-  - name: Manager_Bot
-    role: "CEO Strategico"
-  - name: Project_Bot
-    role: "CTO"
-  - name: Operator_Bot
-    role: "Sviluppatore"
-  - name: Audit_Bot
-    role: "QA"
-
+- name: Manager_Bot
+  role: CEO Strategico
+- name: Project_Bot
+  role: CTO
+- name: Operator_Bot
+  role: Sviluppatore
+- name: Audit_Bot
+  role: QA
 phases:
-  - name: "Fase 2.1: Implementazione TDD Autonomo"
-    tasks:
-      - description: "Potenziare il ProjectBot per generare un file di test unitario (`*_test.py`) per ogni nuovo file Python. Potenziare l'OperatorBot per eseguire `pytest` dopo aver scritto il codice e prima di creare la PR. Il workflow dell'OperatorBot deve fallire se i test non passano."
-        agent: ManagerBot
-        status: pending
+- name: 'Fase 2.1: Implementazione TDD Autonomo'
+  tasks:
+  - description: Potenziare il ProjectBot per generare un file di test unitario (`*_test.py`)
+      per ogni nuovo file Python. Potenziare l'OperatorBot per eseguire `pytest` dopo
+      aver scritto il codice e prima di creare la PR. Il workflow dell'OperatorBot
+      deve fallire se i test non passano.
+    agent: ManagerBot
+    status: planned
