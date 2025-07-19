@@ -49,7 +49,7 @@ Centralizzeremo la logica di generazione dei test in un nuovo modulo di utility 
     2.  Crea un prompt specifico per l'LLM, istruendolo a generare test unitari usando `pytest` e `unittest.mock`. Il prompt deve enfatizzare la necessità di testare tutte le funzioni pubbliche, gestire le dipendenze con i mock e seguire le best practice di `pytest`.
     3.  Invoca `ai_utils.get_completion()` con il prompt.
     4.  Restituisce il codice di test generato dall'AI.
-- [ ] [src/utils/__init__.py] Esponi la nuova utility aggiornando il file `__init__.py` della directory utils.
+- [x] [src/utils/__init__.py] Esponi la nuova utility aggiornando il file `__init__.py` della directory utils.
 
 #### **Fase 3: Potenziamento del ProjectBot**
 
