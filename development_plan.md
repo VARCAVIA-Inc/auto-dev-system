@@ -82,7 +82,7 @@ Modificheremo il `ProjectBot` per includere la creazione dei file di test nel pi
 
 Modificheremo l'`OperatorBot` per eseguire i test e condizionare il workflow al loro esito.
 
-- [ ] [src/bots/operator_bot.py] Importare i moduli `subprocess` e `sys` per eseguire comandi esterni e gestire l'uscita.
+- [x] [src/bots/operator_bot.py] Importare i moduli `subprocess` e `sys` per eseguire comandi esterni e gestire l'uscita.
 - [ ] [src/bots/operator_bot.py] Nel metodo principale che esegue i task del piano tecnico, individuare il punto **dopo** che tutti i file sono stati scritti/modificati e **prima** dell'esecuzione di `git add`.
 - [ ] [src/bots/operator_bot.py] Inserire una nuova funzione o blocco di codice per eseguire i test. Questo blocco deve:
     1.  Eseguire il comando `pytest` usando `subprocess.run()`. Assicurarsi di catturare `stdout`, `stderr` e il codice di ritorno.
