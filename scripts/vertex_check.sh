@@ -1,48 +1,44 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Script per verificare la salute della configurazione di Vertex AI per VARCAVIA Office
-
-echo "=== Vertex AI Project Profile ==="
+echo "=== Vertex AI Project Profile ==="
 echo "Active gcloud account : $(gcloud config get-value account)"
 echo "Active project        : $(gcloud config get-value project)"
 echo "Impersonated SA       : $(gcloud config get-value auth/impersonate_service_account)"
 echo ""
 
 echo "=== Enabled APIs ==="
-gcloud services list --enabled --filter="aiplatform.googleapis.com OR iam.googleapis.com OR iamcredentials.googleapis.com" --format="value(config.name)"
+gcloud services list --enabled \
+  --filter="aiplatform.googleapis.com OR iam.googleapis.com OR iamcredentials.googleapis.com" \
+  --format="value(config.name)"
 echo ""
 
-echo "=== ADC Quota Project ==="
-gcloud auth application-default print-access-token > /dev/null 2>&1
-ADC_FILE=$(gcloud info --format="value(config.paths.application_default_credentials)")
-if [ -f "$ADC_FILE" ]; then
-    QUOTA_PROJECT=$(grep "quota_project_id" "$ADC_FILE" | sed 's/.*: "\(.*\)",/\1/')
-    echo "ADC Quota Project     : $QUOTA_PROJECT"
+echo "=== ADC Quota Project Check ==="
+ADC_FILE=${GOOGLE_APPLICATION_CREDENTIALS:-$HOME/.config/gcloud/application_default_credentials.json}
+if [[ -f "$ADC_FILE" ]]; then
+  python3 - <<PY
+import json, os
+with open("$ADC_FILE") as f:
+    d=json.load(f)
+print("ADC quota_project_id :", d.get("quota_project_id", "not set"))
+PY
 else
-    echo "ADC file not found."
+  echo "ADC file not found"
 fi
 echo ""
 
-echo "=== Available Gemini Models (Global) ==="
-gcloud ai models list --region=global --filter="publisher:google" --format="value(name)" | grep 'gemini'
+echo "=== Available Gemini models (us-central1) ==="
+curl -s -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+  "https://us-central1-aiplatform.googleapis.com/v1/projects/$(gcloud config get-value project)/locations/us-central1/publishers/google/models" \
+  | grep -E '"displayName":.*gemini' || true
 echo ""
 
-echo "=== Live Haiku Test (Gemini 2.5 Flash) ==="
-TEST_PROMPT="Scrivi un haiku sul vento e il mare."
-PROJECT_ID=$(gcloud config get-value project)
-ACCESS_TOKEN=$(gcloud auth print-access-token)
-
+echo "=== Live Haiku Test (gemini‑2.5‑flash) ==="
 curl -s -X POST \
-    -H "Authorization: Bearer $ACCESS_TOKEN" \
-    -H "Content-Type: application/json; charset=utf-8" \
-    "https://global-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/global/publishers/google/models/gemini-2.5-flash:streamGenerateContent" \
-    -d @- <<EOF
-{
-  "contents": {
-    "role": "user",
-    "parts": { "text": "$TEST_PROMPT" }
-  }
-}
-EOF
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+  -H "Content-Type: application/json" \
+  "https://us-central1-aiplatform.googleapis.com/v1/projects/$(gcloud config get-value project)/locations/us-central1/publishers/google/models/gemini-2.5-flash:generateContent" \
+  -d '{"contents":[{"role":"user","parts":[{"text":"Scrivi un haiku sul codice che finalmente funziona"}]}]}' \
+  | python3 -c "import json,sys;print(json.load(sys.stdin)['candidates'][0]['content']['parts'][0]['text'].strip())"
 echo ""
 echo "=== Done ==="
