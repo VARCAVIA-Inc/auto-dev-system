@@ -21,4 +21,4 @@ phases:
       aver scritto il codice e prima di creare la PR. Il workflow dell'OperatorBot
       deve fallire se i test non passano.
     agent: ManagerBot
-    status: planned
+    status: completed
