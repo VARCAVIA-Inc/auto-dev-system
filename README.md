@@ -1,91 +1,21 @@
-# AutoDevSystem
+# VARCAVIA Office - Autonomous Development System (MVP)
 
-AutoDevSystem è un sistema innovativo progettato per automatizzare e gestire lo sviluppo software tramite l'intelligenza artificiale. Questo progetto mira a semplificare il processo di sviluppo, migliorare l'efficienza e ridurre il tempo necessario per il completamento dei progetti.
+Questo repository contiene l'infrastruttura per **VARCAVIA Office**, un sistema di sviluppo software autonomo. Partendo da un obiettivo di business definito in un file `business_plan.yaml`, l'organizzazione di bot collabora per pianificare, sviluppare, e committare il codice necessario per raggiungere l'obiettivo.
 
-## Indice
+## Architettura
 
-- [Setup](#setup)
-- [Utilizzo](#utilizzo)
-- [Funzionalità](#funzionalità)
+Il sistema è composto da un'organizzazione di bot specializzati, ognuno con un ruolo definito:
 
-## Setup
+-   **ManagerBot**: Il CEO strategico. Legge il `business_plan.yaml`, orchestra il flusso di lavoro e delega i compiti agli altri bot.
+-   **ProjectBot**: Il CTO. Riceve un obiettivo di business dal ManagerBot e lo traduce in un piano di sviluppo tecnico dettagliato (`development_plan.md`).
+-   **OperatorBot**: Lo Sviluppatore. Riceve un singolo task tecnico dal ManagerBot (preso dal piano di sviluppo) e lo esegue: scrive codice, esegue comandi e crea Pull Request.
+-   **AuditBot**: Il Supervisore QA. In futuro, analizzerà la qualità, i costi e la coerenza del lavoro svolto, fornendo feedback strategico al ManagerBot.
 
-Per iniziare a utilizzare AutoDevSystem, segui i passaggi di installazione qui di seguito:
+## Attivazione
 
-### Requisiti
-
-Assicurati di avere installato i seguenti strumenti prima di procedere:
-
-- Python >= 3.7
-- Node.js >= 12.x
-- Git
-
-### Installazione
-
-1. **Clona il repository**
-   ```bash
-   git clone https://github.com/tuo-username/AutoDevSystem.git
-   cd AutoDevSystem
-   ```
-
-2. **Configurazione dell'ambiente virtuale (opzionale ma consigliato)**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # Su Windows usa `venv\Scripts\activate`
-   ```
-
-3. **Installa le dipendenze**
-   ```bash
-   pip install -r requirements.txt
-   npm install
-   ```
-
-4. **Configurazione delle variabili d'ambiente**
-   Crea un file `.env` nella cartella principale e imposta le seguenti variabili:
-   ```dotenv
-   AI_API_KEY=la_tua_chiave_api
-   DB_CONNECTION_STRING=la_tua_stringa_di_connessione
-   ```
-
-## Utilizzo
-
-Una volta completato il setup, puoi avviare AutoDevSystem con il seguente comando:
-
-```bash
-python main.py
-```
-
-### Interfaccia Utente
-
-Dopo aver avviato l'applicazione, accedi all'interfaccia utente utilizzando il tuo browser web preferito e naviga su `http://localhost:5000`.
-
-### Comandi principali
-
-- **Generare un nuovo progetto**: Utilizza l'interfaccia per creare un progetto con l'assistenza dell'AI.
-- **Gestire progetti esistenti**: Visualizza, modifica o elimina i progetti già creati.
-- **Monitorare lo sviluppo**: Controlla lo stato dei tuoi progetti in tempo reale.
-
-## Funzionalità
-
-- **Generazione Progetti**: Crea progetti software automaticamente attraverso suggerimenti intelligenti dell'AI.
-- **Analisi Codice**: Analizza il codice sorgente e fornisce raccomandazioni per migliorare la qualità.
-- **Gestione Task**: Automatizza la gestione dei task di sviluppo, dalla pianificazione all'assegnazione alle risorse.
-- **Reportistica**: Genera report dettagliati sullo stato di avanzamento dei progetti e delle attività.
-- **Integrazione con VCS**: Supporta l'integrazione con sistemi di controllo versione come Git.
-- **Monitoraggio delle Performance**: Monitora e analizza le performance del software in esecuzione con suggerimenti per ottimizzazioni.
-
-## Contribuire
-
-Se desideri contribuire a AutoDevSystem, apri un issue o crea una pull request. Segui le linee guida per i contributi forniti nel file CONTRIBUTING.md.
-
-## Licenza
-
-Questo progetto è distribuito sotto la licenza MIT. Puoi trovare maggiori dettagli nel file LICENSE.
-
-## Contatti
-
-Per domande o supporto, non esitare a contattarci all'indirizzo email: support@example.com.
-
----
-
-Grazie per aver scelto AutoDevSystem! Siamo entusiasti di vederti al lavoro con il nostro strumento di sviluppo automatizzato.
+1.  **Configura Google Cloud**: Assicurati di avere un progetto Google Cloud con un account di fatturazione attivo e l'API Vertex AI (`aiplatform.googleapis.com`) abilitata.
+2.  **Crea le Risorse**: Segui le istruzioni per creare il Service Account e il Workload Identity Pool, come fatto in precedenza.
+3.  **Aggiorna i Workflow**: Inserisci i tuoi ID corretti (`project_number`, `project_id`, `service_account`) nei file `.github/workflows/*.yml`.
+4.  **Crea il Segreto GitHub**: Crea un [Fine-grained personal access token](https://github.com/settings/tokens?type=beta) con permessi di lettura/scrittura su `Contents` e `Pull Requests` per questo repository. Salvalo nei segreti del repository con il nome `BOT_GITHUB_TOKEN`.
+5.  **Definisci la Missione**: Modifica `src/business_plan.yaml` per definire il primo task del tuo progetto.
+6.  **Push**: Fai un push sul branch `main` per attivare il ManagerBot.

@@ -1,7 +1,23 @@
+project_name: VARCAVIA Office MVP
+description: "Ciclo di test iniziale per l'infrastruttura di sviluppo autonomo."
+
+core_principles:
+  - "Principio 1: Eseguire un task alla volta."
+  - "Principio 2: Fallire velocemente, imparare più velocemente."
+
+operating_model:
+  - name: Manager_Bot
+    role: "CEO Strategico"
+  - name: Project_Bot
+    role: "CTO"
+  - name: Operator_Bot
+    role: "Sviluppatore"
+  - name: Audit_Bot
+    role: "QA"
+
 phases:
-  - name: "Phase 2.2: WIF Definitive Test"
+  - name: "Fase 1: Test di Funzionamento End-to-End"
     tasks:
-      - id: task_004
-        description: "Create a root file named FINAL_WIF_SUCCESS.md with the content '# WIF Authentication Successful'."
-        agent: ProjectBot
+      - description: "Creare un file di test chiamato 'TEST_SUCCESS.md' nella root del progetto con il contenuto '# Ciclo Autonomo Completato'."
+        agent: ManagerBot
         status: pending

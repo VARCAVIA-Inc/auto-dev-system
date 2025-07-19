@@ -1,14 +1,11 @@
-name: Manager Bot Orchestration
+name: 1. Manager Bot Orchestration
 
 on:
   push:
-    branches:
-      - main
-    paths-ignore:
-      - 'development_plan.md'
+    branches: [ main ]
   workflow_dispatch:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '*/15 * * * *' # Esegui ogni 15 minuti
 
 jobs:
   run_manager_bot:
@@ -18,48 +15,23 @@ jobs:
       pull-requests: write
       actions: write 
       id-token: write
-    outputs:
-      summary: ${{ steps.summary.outputs.summary_text }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.BOT_GITHUB_TOKEN }}
+      - uses: actions/checkout@v4
+        with: { token: '${{ secrets.BOT_GITHUB_TOKEN }}' }
       
-      - name: 'Authenticate to Google Cloud'
-        id: 'auth'
-        uses: 'google-github-actions/auth@v2'
+      - uses: 'google-github-actions/auth@v2'
         with:
           workload_identity_provider: 'projects/826570341026/locations/global/workloadIdentityPools/varcavia-github-pool/providers/varcavia-github-provider'
           service_account: 'varcavia-office-sa@varcavia-office-bc6xvv.iam.gserviceaccount.com'
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.9' }
 
-      - name: Install Dependencies
-        run: |
-          python -m venv .venv
-          source .venv/bin/activate
-          pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Run Manager Bot
+      - name: Install Dependencies & Run
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
           GCP_PROJECT: 'varcavia-office-bc6xvv'
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          source .venv/bin/activate
-          python src/manager_bot.py
-
-      - name: Set run summary output
-        id: summary
-        if: always()
-        run: |
-          if [[ -f run_summary.txt ]]; then
-            echo "summary_text=$(cat run_summary.txt)" >> $GITHUB_OUTPUT
-          else
-            echo "summary_text=Nessuna azione specifica eseguita." >> $GITHUB_OUTPUT
-          fi
+          pip install -r requirements.txt
+          python src/bots/manager_bot.py

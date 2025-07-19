@@ -1,17 +1,11 @@
-name: Operator Bot Task Execution
+name: 2. Operator Bot Task Execution
 
 on:
   workflow_dispatch:
     inputs:
-      branch_name:
-        description: 'Il nome del nuovo branch per questo task'
-        required: true
-      task_description:
-        description: 'La descrizione del singolo task da eseguire'
-        required: true
-      commit_message:
-        description: 'Il messaggio di commit per questo task'
-        required: true
+      branch_name: { required: true }
+      task_description: { required: true }
+      commit_message: { required: true }
 
 jobs:
   execute_task:
@@ -21,31 +15,18 @@ jobs:
       pull-requests: write
       id-token: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.BOT_GITHUB_TOKEN }}
+      - uses: actions/checkout@v4
+        with: { token: '${{ secrets.BOT_GITHUB_TOKEN }}' }
 
-      - name: 'Authenticate to Google Cloud'
-        id: 'auth'
-        uses: 'google-github-actions/auth@v2'
+      - uses: 'google-github-actions/auth@v2'
         with:
           workload_identity_provider: 'projects/826570341026/locations/global/workloadIdentityPools/varcavia-github-pool/providers/varcavia-github-provider'
           service_account: 'varcavia-office-sa@varcavia-office-bc6xvv.iam.gserviceaccount.com'
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.9' }
 
-      - name: Install Dependencies
-        run: |
-          python -m venv .venv
-          source .venv/bin/activate
-          pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Run Operator Bot
+      - name: Install Dependencies & Run
         env:
           BRANCH_NAME: ${{ github.event.inputs.branch_name }}
           TASK_DESCRIPTION: ${{ github.event.inputs.task_description }}
@@ -54,5 +35,6 @@ jobs:
           GCP_PROJECT: 'varcavia-office-bc6xvv'
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          source .venv/bin/activate
-          python src/operator_bot.py
+          pip install -r requirements.txt
+          gh auth setup-git
+          python src/bots/operator_bot.py

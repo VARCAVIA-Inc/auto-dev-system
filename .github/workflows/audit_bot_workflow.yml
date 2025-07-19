@@ -1,9 +1,9 @@
-name: Audit Bot Supervision Cycle
+name: 3. Audit Bot Supervision
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 2 * * *'
+    - cron: '0 3 * * *' # Ogni notte alle 3
 
 jobs:
   run_audit_bot:
@@ -12,32 +12,20 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: 'Authenticate to Google Cloud'
-        id: 'auth'
-        uses: 'google-github-actions/auth@v2'
+      - uses: 'google-github-actions/auth@v2'
         with:
           workload_identity_provider: 'projects/826570341026/locations/global/workloadIdentityPools/varcavia-github-pool/providers/varcavia-github-provider'
           service_account: 'varcavia-office-sa@varcavia-office-bc6xvv.iam.gserviceaccount.com'
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.9' }
 
-      - name: Install Dependencies
-        run: |
-          python -m venv .venv
-          source .venv/bin/activate
-          pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Run Audit Bot
+      - name: Install Dependencies & Run
         env:
           GCP_PROJECT: 'varcavia-office-bc6xvv'
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          source .venv/bin/activate
-          python src/audit_bot.py
+          pip install -r requirements.txt
+          python src/bots/audit_bot.py

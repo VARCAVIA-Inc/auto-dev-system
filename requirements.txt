@@ -3,5 +3,3 @@ PyGithub
 google-cloud-aiplatform
 google-auth
 GitPython
-secure-smtplib
-grpcio
