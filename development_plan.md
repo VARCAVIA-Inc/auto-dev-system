@@ -19,7 +19,7 @@ Potenziare il ProjectBot per generare un file di test unitario (`*_test.py`) per
 
 L'obiettivo di questa fase è strutturare il progetto per supportare i test e aggiungere le librerie necessarie.
 
-- [ ] [shell-command] `mkdir tests`
+- [x] [shell-command] `mkdir tests`
 - [ ] [shell-command] `touch tests/__init__.py`
 - [ ] [requirements.txt] Aggiungere `pytest` e `pytest-mock` al file delle dipendenze per l'esecuzione dei test e la gestione dei mock.
     ```
