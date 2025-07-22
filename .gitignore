@@ -208,3 +208,5 @@ __marimo__/
 
 # AutoDevSystem specific - Make sure .autodev-trigger is NOT ignored
 # .autodev-trigger # <--- SE QUESTA RIGA È PRESENTE, RIMUOVILA O COMMENTALA!
+# Credenziali temporanee di GitHub Actions
+gha-creds-*.json
