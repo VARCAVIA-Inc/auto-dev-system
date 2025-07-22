@@ -41,7 +41,7 @@ L'OperatorBot deve integrare l'esecuzione dei test come un passaggio obbligatori
 
 - [x] [src/bots/operator_bot.py] Modificare il flusso di esecuzione principale. Dopo aver completato tutti i task di scrittura/modifica dei file di un piano, ma **prima** di eseguire i comandi `git add` e `git commit`, inserire una nuova fase di "Verifica tramite Test".
 - [x] [src/bots/operator_bot.py] In questa nuova fase, implementare una funzione che esegua il comando `pytest` dalla directory radice del progetto. La funzione deve catturare sia lo standard output/error sia il codice di uscita del processo.
-- [ ] [src/bots/operator_bot.py] Implementare la logica di controllo del risultato. Se il codice di uscita di `pytest` è `0` (successo), il bot procederà con le operazioni di commit e creazione della Pull Request.
+- [x] [src/bots/operator_bot.py] Implementare la logica di controllo del risultato. Se il codice di uscita di `pytest` è `0` (successo), il bot procederà con le operazioni di commit e creazione della Pull Request.
 - [ ] [src/bots/operator_bot.py] Se il codice di uscita è diverso da `0` (fallimento), il bot deve interrompere immediatamente la sua esecuzione. Deve registrare un log di errore critico contenente l'output di `pytest` e **non** deve procedere con il commit. Il suo task verrà considerato fallito.
 
 #### Fase 4: Creazione di un Test Iniziale per Validare il Workflow
