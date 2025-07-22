@@ -210,3 +210,4 @@ __marimo__/
 # .autodev-trigger # <--- SE QUESTA RIGA È PRESENTE, RIMUOVILA O COMMENTALA!
 # Credenziali temporanee di GitHub Actions
 gha-creds-*.json
+\ngha-creds-*.json
