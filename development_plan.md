@@ -48,7 +48,7 @@ L'OperatorBot deve integrare l'esecuzione dei test come un passaggio obbligatori
 
 Per assicurare che il nuovo processo funzioni correttamente, creeremo un primo file di test per una delle nostre utility esistenti. Questo servirà come caso di studio per validare l'intera catena.
 
-- [ ] [src/utils/logging_utils_test.py] Creare un nuovo file di test per `logging_utils.py`.
+- [x] [src/utils/logging_utils_test.py] Creare un nuovo file di test per `logging_utils.py`.
 - [ ] [src/utils/logging_utils_test.py] Importare `pytest`, `logging` e la funzione `setup_logging` da `src.utils.logging_utils`.
 - [ ] [src/utils/logging_utils_test.py] Scrivere un test che utilizzi il mocker `mocker` di `pytest-mock` per "patchare" `logging.basicConfig`. Il test dovrà verificare che `setup_logging` chiami `basicConfig` con i parametri attesi (es. `level=logging.INFO` e il formato corretto).
 
