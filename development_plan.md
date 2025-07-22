@@ -1,93 +1,60 @@
-Ricevuto. Sto analizzando l'obiettivo di business e la struttura del progetto.
-
-Ecco il piano tecnico dettagliato per gli OperatorBot.
+Certamente. Ecco il piano di sviluppo tecnico per gli OperatorBot.
 
 ---
 
 **TO:** OperatorBots
 **FROM:** ProjectBot (CTO)
 **DATE:** 2023-10-27
-**SUBJECT:** Piano Tecnico - Potenziamento Email per AuditBot
+**SUBJECT:** Piano di Sviluppo: Integrazione del Framework di Testing Automatico
 
-## Obiettivo
+Ciao Team,
 
-Potenziare `AuditBot` per generare e inviare un report di riepilogo via email sullo stato dell'ultimo ciclo di `ManagerBot`. L'implementazione utilizzerà le utility e le credenziali `EMAIL_*` esistenti.
+In linea con il nostro obiettivo di migliorare la qualità e l'affidabilità del nostro codebase, questo piano di sviluppo dettaglia le modifiche necessarie per integrare un processo di testing unitario automatico nel nostro workflow.
 
-## Piano di Esecuzione
+L'obiettivo è duplice:
+1.  Il ProjectBot genererà uno scheletro di file di test per ogni nuovo modulo Python.
+2.  L'OperatorBot eseguirà tutti i test prima di finalizzare qualsiasi modifica, garantendo che solo il codice funzionante venga committato.
 
-Seguire i seguenti passaggi in ordine sequenziale.
+Seguite attentamente i seguenti task in sequenza.
 
-### Fase 1: Setup e Preparazione dell'Ambiente
+---
 
-1.  - [ ] [shell-command] `git checkout main`
-2.  - [ ] [shell-command] `git pull origin main`
-3.  - [ ] [shell-command] `git checkout -b feature/auditbot-email-reporting`
-4.  - [ ] [shell-command] `mkdir -p run`
-5.  - [ ] [shell-command] `echo "*" > run/.gitignore`
-6.  - [ ] [shell-command] `git add run/.gitignore && git commit -m "chore: create and ignore run directory for ephemeral data"`
+### **`development_plan.md`**
 
-### Fase 2: Modifica di ManagerBot per Salvare lo Stato
+#### Fase 1: Configurazione dell'Ambiente di Testing
 
-`ManagerBot` deve salvare il suo stato finale in un file strutturato e prevedibile, in modo che `AuditBot` possa leggerlo. Useremo un file JSON nella directory `run/`.
+Il primo passo è aggiungere e installare le dipendenze necessarie per eseguire i test.
 
-1.  - [ ] **[src/bots/manager_bot.py]** Modificare il file `manager_bot.py` per salvare lo stato.
-    - Aggiungere gli import necessari all'inizio del file: `import json` e `import os`.
-    - Alla fine del suo ciclo di esecuzione principale, aggiungere la logica per creare un dizionario di riepilogo (es. `status_summary = {"status": "COMPLETED", "tasks_run": 5, "errors": 0}`).
-    - Assicurarsi che la directory `run/` esista: `os.makedirs('run', exist_ok=True)`.
-    - Scrivere il dizionario in un file JSON: `with open('run/manager_status.json', 'w') as f: json.dump(status_summary, f, indent=4)`.
+- [ ] [requirements.txt] Aggiungere `pytest` per l'esecuzione dei test e `pytest-mock` per facilitare il mocking delle dipendenze.
+- [ ] [shell-command] `pip install -r requirements.txt`
 
-### Fase 3: Potenziamento di AuditBot per l'Invio di Email
+#### Fase 2: Potenziamento del ProjectBot per la Generazione di Test
 
-Questo è il cuore della modifica. `AuditBot` leggerà il file di stato, comporrà l'email e la invierà.
+Dobbiamo modificare il ProjectBot affinché includa la creazione di file di test nel suo processo di pianificazione.
 
-1.  - [ ] **[src/bots/audit_bot.py]** Modificare il file `audit_bot.py`.
-    - Aggiungere gli import necessari: `import json`, `import os` e `from utils.email_sender import send_email`.
-    - Nel metodo principale di `AuditBot`, implementare la seguente logica:
-        - Definire il percorso del file di stato: `status_file_path = 'run/manager_status.json'`.
-        - Controllare se il file esiste. Se non esiste, registrare un avviso (log a warning) e terminare la funzione di reporting.
-        - Se il file esiste, leggerlo e caricare i dati JSON.
-        - Recuperare l'indirizzo email del destinatario da una variabile d'ambiente. Questo disaccoppia la configurazione dal codice: `recipient_email = os.getenv('AUDIT_RECIPIENT_EMAIL')`. Aggiungere un controllo per assicurarsi che la variabile sia impostata.
-        - Formattare il corpo e l'oggetto dell'email. Esempio:
-            - `subject = "Riepilogo Ciclo ManagerBot"`
-            - `body = f"Report di stato per l'ultimo ciclo di ManagerBot:\n\n{json.dumps(status_data, indent=2)}"`
-        - Invocare la funzione di invio email: `send_email(recipient=recipient_email, subject=subject, body=body)`.
-        - Gestire eventuali eccezioni durante l'invio dell'email e registrarle (log an error).
-        - Dopo l'elaborazione, eliminare il file di stato per evitare di inviare nuovamente lo stesso report: `os.remove(status_file_path)`.
+- [ ] [src/bots/project_bot.py] Modificare la logica di generazione del piano di sviluppo. Per ogni attività di creazione di un file `nome_file.py`, aggiungere un'attività corrispondente per creare un file `nome_file_test.py` nella stessa directory o in una directory `tests` parallela. Per coerenza con la struttura attuale, lo creeremo nella stessa directory.
+- [ ] [src/bots/project_bot.py] Il template per il nuovo file di test `*_test.py` deve contenere una struttura di base: l'import del modulo da testare e una funzione di test di placeholder che fallisce di default (es. `assert False, "Test non ancora implementato"`), per garantire che i nuovi file vengano testati.
 
-### Fase 4: Configurazione e Test
+#### Fase 3: Potenziamento dell'OperatorBot per l'Esecuzione dei Test
 
-Dobbiamo assicurarci che la configurazione sia documentata e che il nuovo flusso di lavoro possa essere testato.
+L'OperatorBot deve integrare l'esecuzione dei test come un passaggio obbligatorio nel suo workflow.
 
-1.  - [ ] **[README.md]** Aggiornare il file `README.md` principale.
-    - Aggiungere una nuova sezione intitolata `Configurazione Email di Audit`.
-    - Documentare la nuova variabile d'ambiente richiesta: `AUDIT_RECIPIENT_EMAIL`. Spiegare che questo è l'indirizzo a cui verranno inviati i report di riepilogo.
+- [ ] [src/bots/operator_bot.py] Modificare il flusso di esecuzione principale. Dopo aver completato tutti i task di scrittura/modifica dei file di un piano, ma **prima** di eseguire i comandi `git add` e `git commit`, inserire una nuova fase di "Verifica tramite Test".
+- [ ] [src/bots/operator_bot.py] In questa nuova fase, implementare una funzione che esegua il comando `pytest` dalla directory radice del progetto. La funzione deve catturare sia lo standard output/error sia il codice di uscita del processo.
+- [ ] [src/bots/operator_bot.py] Implementare la logica di controllo del risultato. Se il codice di uscita di `pytest` è `0` (successo), il bot procederà con le operazioni di commit e creazione della Pull Request.
+- [ ] [src/bots/operator_bot.py] Se il codice di uscita è diverso da `0` (fallimento), il bot deve interrompere immediatamente la sua esecuzione. Deve registrare un log di errore critico contenente l'output di `pytest` e **non** deve procedere con il commit. Il suo task verrà considerato fallito.
 
-2.  - [ ] **[scripts/test_audit_email.py]** Creare uno script di test per verificare la funzionalità in isolamento.
-    - Lo script deve:
-        1. Importare `os`, `json`, `sys` e aggiungere `src` al path.
-        2. Importare la funzione `send_email` da `utils.email_sender`.
-        3. Creare un file `run/manager_status.json` fittizio per il test. Esempio: `{'status': 'TEST_SUCCESS', 'message': 'This is a test report.'}`.
-        4. Impostare la variabile d'ambiente `AUDIT_RECIPIENT_EMAIL`.
-        5. Invocare la logica di reporting di `AuditBot` (potrebbe essere necessario refattorizzare la logica in una funzione richiamabile all'interno di `audit_bot.py`).
-        6. Stampare un messaggio di successo o fallimento.
+#### Fase 4: Creazione di un Test Iniziale per Validare il Workflow
 
-3.  - [ ] **[shell-command]** Eseguire il test (assicurarsi che le variabili d'ambiente `EMAIL_*` e `AUDIT_RECIPIENT_EMAIL` siano impostate nella shell corrente).
-    ```bash
-    export AUDIT_RECIPIENT_EMAIL="your-test-email@example.com"
-    python scripts/test_audit_email.py
-    ```
+Per assicurare che il nuovo processo funzioni correttamente, creeremo un primo file di test per una delle nostre utility esistenti. Questo servirà come caso di studio per validare l'intera catena.
 
-### Fase 5: Finalizzazione
+- [ ] [src/utils/logging_utils_test.py] Creare un nuovo file di test per `logging_utils.py`.
+- [ ] [src/utils/logging_utils_test.py] Importare `pytest`, `logging` e la funzione `setup_logging` da `src.utils.logging_utils`.
+- [ ] [src/utils/logging_utils_test.py] Scrivere un test che utilizzi il mocker `mocker` di `pytest-mock` per "patchare" `logging.basicConfig`. Il test dovrà verificare che `setup_logging` chiami `basicConfig` con i parametri attesi (es. `level=logging.INFO` e il formato corretto).
 
-1.  - [ ] **[shell-command]** Rimuovere i file di test temporanei se lo script di test non viene committato. Se lo script viene committato, modificare il `.gitignore` per ignorare i file di stato generati localmente. (Nota: Il `run/.gitignore` della Fase 1 dovrebbe già gestire questo).
-2.  - [ ] **[shell-command]** Formattare il codice per garantire la coerenza.
-    ```bash
-    # (assumendo l'uso di 'black' o un altro linter/formatter)
-    # black .
-    ```
-3.  - [ ] [shell-command] `git add .`
-4.  - [ ] [shell-command] `git commit -m "feat(auditbot): implement email reporting for managerbot status"`
-5.  - [ ] [shell-command] `git push origin feature/auditbot-email-reporting`
-6.  - [ ] Creare una Pull Request su GitHub dal branch `feature/auditbot-email-reporting` a `main`. Assegnare a ProjectBot per la revisione.
+---
 
-Eseguire.
+Completate questi task nell'ordine specificato. Il successo di questa iniziativa è cruciale per la stabilità a lungo termine della nostra organizzazione.
+
+Saluti,
+ProjectBot (CTO)
