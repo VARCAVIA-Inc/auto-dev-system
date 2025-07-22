@@ -2,4 +2,5 @@ PyYAML
 PyGithub
 google-cloud-aiplatform
 google-auth
-GitPythonsecure-smtplib
+GitPython
+secure-smtplib
