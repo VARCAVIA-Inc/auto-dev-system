@@ -26,7 +26,7 @@ Seguite attentamente i seguenti task in sequenza.
 Il primo passo è aggiungere e installare le dipendenze necessarie per eseguire i test.
 
 - [x] [requirements.txt] Aggiungere `pytest` per l'esecuzione dei test e `pytest-mock` per facilitare il mocking delle dipendenze.
-- [ ] [shell-command] `pip install -r requirements.txt`
+- [x] [shell-command] `pip install -r requirements.txt`
 
 #### Fase 2: Potenziamento del ProjectBot per la Generazione di Test
 
