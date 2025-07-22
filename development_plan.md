@@ -32,7 +32,7 @@ Il primo passo è aggiungere e installare le dipendenze necessarie per eseguire 
 
 Dobbiamo modificare il ProjectBot affinché includa la creazione di file di test nel suo processo di pianificazione.
 
-- [ ] [src/bots/project_bot.py] Modificare la logica di generazione del piano di sviluppo. Per ogni attività di creazione di un file `nome_file.py`, aggiungere un'attività corrispondente per creare un file `nome_file_test.py` nella stessa directory o in una directory `tests` parallela. Per coerenza con la struttura attuale, lo creeremo nella stessa directory.
+- [x] [src/bots/project_bot.py] Modificare la logica di generazione del piano di sviluppo. Per ogni attività di creazione di un file `nome_file.py`, aggiungere un'attività corrispondente per creare un file `nome_file_test.py` nella stessa directory o in una directory `tests` parallela. Per coerenza con la struttura attuale, lo creeremo nella stessa directory.
 - [ ] [src/bots/project_bot.py] Il template per il nuovo file di test `*_test.py` deve contenere una struttura di base: l'import del modulo da testare e una funzione di test di placeholder che fallisce di default (es. `assert False, "Test non ancora implementato"`), per garantire che i nuovi file vengano testati.
 
 #### Fase 3: Potenziamento dell'OperatorBot per l'Esecuzione dei Test
