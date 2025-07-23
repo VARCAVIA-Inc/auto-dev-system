@@ -1,4 +1,4 @@
-name: "[DEBUG] ProjectBot Planner Test
+name: "[DEBUG] ProjectBot Planner Test"
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { token: '${{ secrets.BOT_GITHUB_TOKEN }}' }
-
+      
       - uses: 'google-github-actions/auth@v2'
         with:
           workload_identity_provider: 'projects/826570341026/locations/global/workloadIdentityPools/varcavia-github-pool/providers/varcavia-github-provider'
@@ -29,4 +29,4 @@ jobs:
         run: |
           pip install -r requirements.txt
           # Simula una chiamata dal ManagerBot con un task di test
-          python -c "from src.bots.project_bot import run_project_bot; task = {'description': 'Crea un file hello.py che stampa Hello World e un test per verificarlo.'}; run_project_bot(task, 0, 0)"
+          python -c "from src.bots.project_bot import run_project_bot; task = {\"description\": \"Crea un file hello.py che stampa Hello World e un test per verificarlo.\"}; run_project_bot(task, 0, 0)"
