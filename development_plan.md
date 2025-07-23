@@ -35,7 +35,7 @@ Esegui i seguenti sotto-task in ordine.
     - [x] `[shell-command]` `mkdir tests/utils`
 - [x] Scrivi i test unitari per ogni modulo esistente. Per ogni file `.py` in `src`, crea un file `test_*.py` in `tests`.
     - [x] `[src/bots/audit_bot.py]`
-    - [ ] `[tests/bots/test_audit_bot.py]` Scrivi test per verificare la logica di audit.
+    - [x] `[tests/bots/test_audit_bot.py]` Scrivi test per verificare la logica di audit.
     - [ ] `[src/bots/manager_bot.py]`
     - [ ] `[tests/bots/test_manager_bot.py]` Scrivi test per verificare la logica del ManagerBot.
     - [ ] `[src/bots/operator_bot.py]`
