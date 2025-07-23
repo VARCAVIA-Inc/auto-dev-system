@@ -45,7 +45,7 @@ Esegui i seguenti sotto-task in ordine.
     - [x] `[src/utils/ai_utils.py]`
     - [x] `[tests/utils/test_ai_utils.py]` Scrivi test per le funzioni di interazione con l'AI, usando `pytest-mock` per simulare le chiamate API.
     - [x] `[src/utils/email_sender.py]`
-    - [ ] `[tests/utils/test_email_sender.py]` Scrivi test per il modulo di invio email, simulando il server SMTP.
+    - [x] `[tests/utils/test_email_sender.py]` Scrivi test per il modulo di invio email, simulando il server SMTP.
     - [ ] `[src/utils/git_utils.py]`
     - [ ] `[tests/utils/test_git_utils.py]` Scrivi test per le utility di Git, simulando i comandi di sistema.
     - [ ] `[src/utils/logging_utils.py]`
