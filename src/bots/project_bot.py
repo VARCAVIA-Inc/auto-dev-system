@@ -8,18 +8,21 @@ from src.utils.ai_utils import get_gemini_model, generate_response, PLANNING_MOD
 
 def is_plan_valid(plan_text: str) -> bool:
     """
-    Controlla se un piano di sviluppo generato è valido.
-    Un piano è valido se contiene almeno un task e ogni task ha un marcatore.
+    Controlla se un piano di sviluppo generato è valido usando una regex più severa.
     """
     logging.info("Validazione del piano di sviluppo generato...")
     has_tasks = False
     for line in plan_text.splitlines():
         line = line.strip()
+        if not line:
+            continue
         if line.startswith("- [ ]"):
             has_tasks = True
-            # Controlla che ci sia un marcatore [tipo]
-            if not re.search(r'^- \[ \] \[(.+?)\]', line):
-                logging.error(f"Riga di task non valida trovata nel piano: '{line}'. Manca il marcatore [tipo].")
+            # --- CONTROLLO DI VALIDITÀ POTENZIATO ---
+            # Questa regex assicura che la riga inizi con '- [ ]' seguito
+            # immediatamente dal marcatore [tipo], senza caratteri spuri in mezzo.
+            if not re.match(r'^\s*-\s*\[\s*\]\s*\[(.+?)\]', line):
+                logging.error(f"Riga di task non valida trovata nel piano: '{line}'. Formato non corretto.")
                 return False
     
     if not has_tasks:
@@ -28,9 +31,20 @@ def is_plan_valid(plan_text: str) -> bool:
     return has_tasks
 
 def update_business_plan_status(task_index, phase_index, new_status="planned"):
-    # (Codice invariato)
-    # ...
-    return True # Placeholder
+    # (Codice invariato, lo ometto per brevità ma va lasciato nel file)
+    repo_root = os.getenv('GITHUB_WORKSPACE', os.getcwd())
+    business_plan_path = os.path.join(repo_root, 'src', 'business_plan.yaml')
+    try:
+        with open(business_plan_path, 'r') as file:
+            plan = yaml.safe_load(file)
+        plan['phases'][phase_index]['tasks'][task_index]['status'] = new_status
+        with open(business_plan_path, 'w') as file:
+            yaml.dump(plan, file, default_flow_style=False, sort_keys=False)
+        logging.info(f"Stato del task aggiornato a '{new_status}'.")
+        return True
+    except Exception as e:
+        logging.error(f"Errore durante l'aggiornamento del Business Plan: {e}", exc_info=True)
+        return False
 
 def run_project_bot(task_details, task_index, phase_index):
     task_description = task_details.get('description', 'N/A')
@@ -54,20 +68,18 @@ def run_project_bot(task_details, task_index, phase_index):
         f"Struttura del progetto attuale:\n```\n{file_structure}\n```\n\n"
         f"Obiettivo di Business: '{task_description}'.\n\n"
         f"**REGOLE CRITICHE E OBBLIGATORIE PER IL PIANO:**\n"
-        f"1. Il piano DEVE contenere una lista di sotto-task.\n"
-        f"2. OGNI SINGOLO SOTTO-TASK DEVE iniziare con '- [ ]' seguito da un marcatore tra parentesi quadre, come '[percorso/del/file.py]' o '[shell-command]'.\n"
-        f"3. Per ogni file di codice sorgente, DEVI includere un task successivo per un file di test corrispondente (es. `[src/bots/test_mio_file.py]`).\n"
+        f"1. Il piano DEVE contenere una lista di sotto-task azionabili.\n"
+        f"2. OGNI SINGOLO SOTTO-TASK DEVE iniziare con '- [ ]' seguito IMMEDIATAMENTE da un marcatore tra parentesi quadre, come '[percorso/del/file.py]' o '[shell-command]'. NESSUN ALTRO CARATTERE è permesso tra '- [ ]' e il marcatore.\n"
+        f"3. Per ogni file di codice sorgente, DEVI includere un task successivo per un file di test corrispondente (es. `[tests/bots/test_mio_file.py]`).\n"
         f"4. Il comando in un task '[shell-command]' DEVE essere puro, senza virgolette inverse (backticks)."
     )
 
     piano_generato = generate_response(gemini_model, prompt)
     
-    # --- CONTROLLO DI VALIDITÀ POTENZIATO ---
     if not piano_generato or not is_plan_valid(piano_generato):
         logging.error("Fallimento nella generazione del piano: l'output dell'IA è vuoto o non supera il controllo di validità.")
         update_business_plan_status(task_index, phase_index, "planning_failed")
         return
-    # ------------------------------------
 
     plan_path = os.path.join(repo_root, 'development_plan.md')
     with open(plan_path, 'w') as f:
