@@ -36,7 +36,7 @@ Esegui i seguenti sotto-task in ordine.
 - [x] Scrivi i test unitari per ogni modulo esistente. Per ogni file `.py` in `src`, crea un file `test_*.py` in `tests`.
     - [x] `[src/bots/audit_bot.py]`
     - [x] `[tests/bots/test_audit_bot.py]` Scrivi test per verificare la logica di audit.
-    - [ ] `[src/bots/manager_bot.py]`
+    - [x] `[src/bots/manager_bot.py]`
     - [ ] `[tests/bots/test_manager_bot.py]` Scrivi test per verificare la logica del ManagerBot.
     - [ ] `[src/bots/operator_bot.py]`
     - [ ] `[tests/bots/test_operator_bot.py]` Scrivi test per le funzionalità principali dell'OperatorBot. Questo test verrà aggiornato nella fase successiva.
