@@ -2,14 +2,14 @@ name: 4. PR Validation
 
 on:
   pull_request:
-    types: [opened, synchronize] # Si attiva quando una PR è aperta o aggiornata
+    types: [opened, synchronize]
 
 jobs:
   validate-pr:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Permesso di scrivere lo stato dei check
-      pull-requests: write # Permesso di aggiungere etichette
+      contents: write
+      pull-requests: write
       id-token: write
     steps:
       - name: Checkout PR code
@@ -43,12 +43,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-        if: always() # Esegui sempre, anche se lo step precedente fallisce
+        if: always()
         run: |
           gh pr edit $PR_NUMBER --remove-label "status: ci-in-progress"
           if [[ ${{ steps.tests.outcome }} == 'success' ]]; then
             gh pr edit $PR_NUMBER --add-label "ci: passed"
           else
             gh pr edit $PR_NUMBER --add-label "ci: failed"
-            exit 1 # Fa fallire il workflow se i test falliscono
+            exit 1
           fi

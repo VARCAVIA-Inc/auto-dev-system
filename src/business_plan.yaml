@@ -1,9 +1,9 @@
-project_name: VARCAVIA Office - Integration Test
-description: "Missione di test end-to-end per validare ogni componente del sistema autonomo, dalla pianificazione TDD all'integrazione automatica del codice."
+project_name: VARCAVIA Office - MVP Test
+description: "Missione di test end-to-end per validare il ciclo completo di sviluppo, test e integrazione autonoma."
 
 phases:
-  - name: "Fase 1: Validazione del Ciclo di Sviluppo Completo"
+  - name: "Fase 1: Validazione del Ciclo Completo"
     tasks:
-      - description: "Sviluppare un nuovo modulo di utility, 'math_utils'. Il modulo, in `src/utils/math_utils.py`, deve contenere una singola funzione `add(a, b)` che restituisce la somma di due numeri. Creare anche un file di test `tests/utils/test_math_utils.py` che verifichi il corretto funzionamento della funzione `add`."
+      - description: "Creare un nuovo modulo in `src/utils/math_utils.py` che contenga una funzione `add(a, b)` che restituisce la somma di due numeri. Creare anche un file di test `tests/utils/test_math_utils.py` che verifichi il corretto funzionamento della funzione `add`."
         agent: ManagerBot
         status: pending

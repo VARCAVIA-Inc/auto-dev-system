@@ -13,7 +13,7 @@ def create_pull_request(branch_name: str, task_status: str, error_log: str = "")
         logging.info(f"Creazione della Pull Request per il branch '{branch_name}'...")
         env = os.environ.copy()
         env['GH_TOKEN'] = os.getenv("GITHUB_TOKEN")
-        
+
         pr_title = f"feat: Esecuzione task del OperatorBot ({branch_name})"
         pr_body = f"Task completato dall'OperatorBot.\n\n**Stato:** {task_status}"
         label = "status: needs-review"
@@ -31,7 +31,7 @@ def create_pull_request(branch_name: str, task_status: str, error_log: str = "")
             '--body', pr_body,
             '--label', label
         ]
-        
+
         result = subprocess.run(command, capture_output=True, text=True, check=True, env=env)
         logging.info(f"✅ Pull Request creata: {result.stdout.strip()}")
         return True
@@ -51,14 +51,14 @@ def main():
 
     if not all([branch_name, task_description, task_line_index is not None]):
         logging.critical("Errore: mancano variabili d'ambiente necessarie."); exit(1)
-        
+
     logging.info(f"--- OperatorBot: Avviato per il task: '{task_description}' ---")
-    
+
     try:
         repo = Repo(repo_path)
         repo.git.config("user.name", "VARCAVIA Office Bot")
         repo.git.config("user.email", "bot@varcavia.com")
-        
+
         if branch_name not in repo.heads:
             repo.create_head(branch_name).checkout()
         else:
@@ -66,13 +66,13 @@ def main():
         logging.info(f"Spostato sul branch: {branch_name}")
 
         state_utils.update_task_status(task_line_index, "IN_PROGRESS")
-        
+
         match = re.search(r'\[(.*?)\]', task_description)
         if not match: raise ValueError(f"Marcatore di tipo task non trovato in '{task_description}'.")
-        
+
         task_type = match.group(1)
         action_description = task_description.replace(f'[{task_type}]', '').strip()
-        
+
         if task_type == 'shell-command':
             logging.info(f"Eseguo comando shell: '{action_description}'")
             # Crea le directory parent se necessario, rendendo il comando più robusto
@@ -99,11 +99,11 @@ def main():
             commit_message = f"feat: Esegue il task '{task_description[:40]}...'"
             repo.git.commit('-m', commit_message)
             logging.info(f"Commit creato: '{commit_message}'")
-        
+
         remote_url = f"https://x-access-token:{os.getenv('GITHUB_TOKEN')}@github.com/{os.getenv('GITHUB_REPOSITORY')}.git"
         repo.git.push(remote_url, f'HEAD:{branch_name}', '--force')
         logging.info(f"Push del branch '{branch_name}' completato.")
-        
+
         create_pull_request(branch_name, "DONE")
         state_utils.update_task_status(task_line_index, "DONE")
 

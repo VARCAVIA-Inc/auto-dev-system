@@ -106,7 +106,7 @@ def main():
         with open(business_plan_path, 'r') as file:
             business_plan = yaml.safe_load(file)
     except FileNotFoundError:
-        logging.critical("business_plan.yaml non trovato. Interruzione.")
+        logging.critical(f"business_plan.yaml non trovato. Interruzione.")
         return
 
     # Se un piano esiste, la priorità è eseguirlo

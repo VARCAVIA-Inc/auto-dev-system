@@ -11,7 +11,7 @@ def get_plan_path() -> str:
 def parse_plan() -> Optional[List[Dict]]:
     """
     Legge il development_plan.md e lo trasforma in una lista strutturata di task.
-    Ogni task è un dizionario con 'line', 'status', e 'description'.
+    Ogni task è un dizionario con 'line_index', 'status', e 'description'.
     """
     plan_path = get_plan_path()
     if not os.path.exists(plan_path):
@@ -24,7 +24,7 @@ def parse_plan() -> Optional[List[Dict]]:
             if not line.startswith("- ["):
                 continue
 
-            # Estrae lo stato (es. ' ', 'x', 'F') e la descrizione
+            # Estrae lo stato (es. ' ', 'x', 'F', 'P') e la descrizione
             match = re.match(r'^\s*-\s*\[(.)\]\s*(.*)', line)
             if match:
                 status_char = match.group(1)
@@ -73,7 +73,7 @@ def find_next_task() -> Optional[Dict]:
     if not tasks:
         return None
 
-    # Priorità ai task falliti da ritentare
+    # Priorità ai task falliti da ritentare (in futuro aggiungeremo un contatore di retry)
     for task in tasks:
         if task['status'] == 'FAILED':
             return task
