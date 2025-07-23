@@ -44,7 +44,7 @@ Esegui i seguenti sotto-task in ordine.
     - [x] `[tests/bots/test_project_bot.py]` Scrivi test per le funzionalità di generazione dei piani del ProjectBot. Anche questo verrà aggiornato.
     - [x] `[src/utils/ai_utils.py]`
     - [x] `[tests/utils/test_ai_utils.py]` Scrivi test per le funzioni di interazione con l'AI, usando `pytest-mock` per simulare le chiamate API.
-    - [ ] `[src/utils/email_sender.py]`
+    - [x] `[src/utils/email_sender.py]`
     - [ ] `[tests/utils/test_email_sender.py]` Scrivi test per il modulo di invio email, simulando il server SMTP.
     - [ ] `[src/utils/git_utils.py]`
     - [ ] `[tests/utils/test_git_utils.py]` Scrivi test per le utility di Git, simulando i comandi di sistema.
