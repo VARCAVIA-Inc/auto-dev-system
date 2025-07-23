@@ -1,14 +1,13 @@
 project_name: VARCAVIA Office - Fase 2.2
-description: "Missione di auto-miglioramento per implementare l'integrazione continua autonoma."
+description: "Missione di auto-miglioramento per implementare il reporting avanzato."
+
 core_principles:
-- "Il codice viene integrato solo se i test automatici hanno successo."
-operating_model:
-- name: Manager_Bot
-  role: "CEO e Responsabile Integrazione"
-# ... (gli altri bot rimangono invariati)
+  - "Il sistema deve essere consapevole del proprio stato operativo."
+  - "La comunicazione deve essere basata su dati reali."
+
 phases:
-- name: "Fase 2.2: Implementazione Auto-Merge"
-  tasks:
-  - description: "Potenziare il ManagerBot per leggere lo stato dei controlli CI di una Pull Request. Se i controlli hanno successo ('SUCCESS'), il bot deve unire (merge) la PR usando il metodo 'squash' e cancellare il branch associato. Se i controlli falliscono, deve chiudere la PR e cancellare il branch."
-    agent: ManagerBot
-    status: pending
+  - name: "Fase 2.2: Attivazione dell'Intelligenza Supervisionale"
+    tasks:
+      - description: "Potenziare l'AuditBot per renderlo consapevole dello stato del repository. Deve eseguire i comandi 'gh run list' e 'gh pr list' per raccogliere dati sugli ultimi workflow e sulle Pull Request. Deve usare questi dati per generare, tramite IA, un report di stato esplicativo e inviarlo via email."
+        agent: ManagerBot
+        status: pending
