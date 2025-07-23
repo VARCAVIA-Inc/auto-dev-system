@@ -33,7 +33,7 @@ Esegui i seguenti sotto-task in ordine.
 - [x] Crea le sotto-directory necessarie nella cartella `tests` per rispecchiare la struttura di `src`.
     - [x] `[shell-command]` `mkdir tests/bots`
     - [x] `[shell-command]` `mkdir tests/utils`
-- [ ] Scrivi i test unitari per ogni modulo esistente. Per ogni file `.py` in `src`, crea un file `test_*.py` in `tests`.
+- [x] Scrivi i test unitari per ogni modulo esistente. Per ogni file `.py` in `src`, crea un file `test_*.py` in `tests`.
     - [ ] `[src/bots/audit_bot.py]`
     - [ ] `[tests/bots/test_audit_bot.py]` Scrivi test per verificare la logica di audit.
     - [ ] `[src/bots/manager_bot.py]`
