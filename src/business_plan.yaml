@@ -1,24 +1,14 @@
-project_name: VARCAVIA Office - Fase 2
-description: Missione di auto-miglioramento per implementare il ciclo di Test-Driven
-  Development autonomo.
+project_name: VARCAVIA Office - Fase 2.2
+description: "Missione di auto-miglioramento per implementare l'integrazione continua autonoma."
 core_principles:
-- "Ogni nuova funzionalit\xE0 deve essere accompagnata da test."
-- Il codice non viene integrato se i test non passano.
+- "Il codice viene integrato solo se i test automatici hanno successo."
 operating_model:
 - name: Manager_Bot
-  role: CEO Strategico
-- name: Project_Bot
-  role: CTO
-- name: Operator_Bot
-  role: Sviluppatore
-- name: Audit_Bot
-  role: QA
+  role: "CEO e Responsabile Integrazione"
+# ... (gli altri bot rimangono invariati)
 phases:
-- name: 'Fase 2.1: Implementazione TDD Autonomo'
+- name: "Fase 2.2: Implementazione Auto-Merge"
   tasks:
-  - description: Potenziare il ProjectBot per generare un file di test unitario (`*_test.py`)
-      per ogni nuovo file Python. Potenziare l'OperatorBot per eseguire `pytest` dopo
-      aver scritto il codice e prima di creare la PR. Il workflow dell'OperatorBot
-      deve fallire se i test non passano.
+  - description: "Potenziare il ManagerBot per leggere lo stato dei controlli CI di una Pull Request. Se i controlli hanno successo ('SUCCESS'), il bot deve unire (merge) la PR usando il metodo 'squash' e cancellare il branch associato. Se i controlli falliscono, deve chiudere la PR e cancellare il branch."
     agent: ManagerBot
-    status: planned
+    status: pending

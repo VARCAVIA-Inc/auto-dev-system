@@ -9,13 +9,12 @@ from src.utils.git_utils import commit_and_push_changes
 from src.bots.project_bot import run_project_bot
 
 def get_repo_root():
-    """Restituisce la root directory del repository."""
     return os.getenv('GITHUB_WORKSPACE', os.getcwd())
 
 def manage_pull_requests():
     """
-    Cerca le PR create dai bot, le unisce se i controlli
-    sono passati e cancella i branch.
+    Logica potenziata per la gestione completa delle Pull Request.
+    Cerca le PR, controlla lo stato dei test e agisce di conseguenza (merge o chiusura).
     """
     logging.info("--- ManagerBot: Inizio fase di gestione Pull Request ---")
     
@@ -44,39 +43,43 @@ def manage_pull_requests():
         for pr in prs:
             pr_number = pr['number']
             branch_name = pr['headRefName']
-            status = pr.get('status', 'PENDING').upper()
+            status = pr.get('status', 'PENDING').upper() # Lo stato può essere PENDING, SUCCESS, o FAILURE
 
             logging.info(f"Analizzo PR #{pr_number} dal branch '{branch_name}' con stato '{status}'.")
 
             if status == 'SUCCESS':
-                logging.info(f"PR #{pr_number} ha superato i controlli. Tento il merge automatico.")
+                logging.info(f"PR #{pr_number} ha superato i test. Attivo il merge automatico.")
+                # Usa l'auto-merge: attende che tutti i check passino (se ce ne sono altri),
+                # poi fa il merge e cancella il branch.
                 merge_command = ['gh', 'pr', 'merge', str(pr_number), '--auto', '--squash', '--delete-branch']
-                subprocess.run(merge_command, check=True)
-                logging.info(f"✅ Merge per PR #{pr_number} attivato con successo.")
+                merge_result = subprocess.run(merge_command, check=True, capture_output=True, text=True)
+                logging.info(f"✅ Merge per PR #{pr_number} attivato con successo. Dettagli: {merge_result.stdout.strip()}")
             elif status == 'FAILURE':
-                logging.warning(f"PR #{pr_number} ha dei controlli falliti. La chiudo.")
-                comment_body = "I controlli automatici sono falliti. Chiudo questa PR e cancello il branch per fare pulizia."
+                logging.warning(f"PR #{pr_number} ha dei controlli falliti. Chiudo la PR e cancello il branch.")
+                comment_body = "I controlli automatici sono falliti. Chiudo questa PR per fare pulizia. Il task verrà probabilmente ri-pianificato."
                 subprocess.run(['gh', 'pr', 'comment', str(pr_number), '--body', comment_body], check=True)
                 subprocess.run(['gh', 'pr', 'close', str(pr_number)], check=True)
+                # La cancellazione del branch è ora gestita a parte
                 subprocess.run(['gh', 'repo', 'delete-branch', branch_name], check=True)
+            else: # PENDING
+                logging.info(f"PR #{pr_number} è in attesa dei controlli. Nessuna azione per ora.")
 
     except (subprocess.CalledProcessError, json.JSONDecodeError) as e:
-        logging.error(f"Errore durante la gestione delle Pull Request: {e}")
+        logging.error(f"Errore durante la gestione delle Pull Request: {e}", exc_info=True)
 
+
+# Il resto del file (delegate_to_operator, main, etc.) rimane invariato
+# ma lo includo per completezza, assicurati che il tuo file sia identico a questo.
 
 def delegate_to_operator(task_line):
-    """Attiva il workflow dell'OperatorBot per un singolo task."""
+    # ... (codice invariato)
     task_description = task_line.replace("- [ ]", "").strip()
     timestamp = int(time.time())
     branch_name = f"autodev/task-{timestamp}"
     commit_message = f"feat: Implementa task '{task_description[:40]}...'"
-
     logging.info(f"Delega del task: '{task_description}' all'OperatorBot sul branch '{branch_name}'.")
-    
     workflow_name = '2_operator_bot.yml'
-    
     command = ['gh', 'workflow', 'run', workflow_name, '-f', f'branch_name={branch_name}', '-f', f'task_description={task_description}', '-f', f'commit_message={commit_message}', '--ref', 'main']
-    
     try:
         subprocess.run(command, check=True, capture_output=True, text=True)
         logging.info("✅ Workflow dell'OperatorBot attivato.")
@@ -104,8 +107,6 @@ def main():
 
     if os.path.exists(plan_path):
         logging.info("Trovato un 'development_plan.md' esistente. Supervisione del piano in corso...")
-        
-        # Logica di delega dal piano esistente
         try:
             with open(plan_path, 'r+') as f:
                 lines = f.readlines()
@@ -118,10 +119,9 @@ def main():
                             f.truncate()
                             commit_msg = f"chore(manager): Delegato task '{line.strip()[:40]}...'"
                             commit_and_push_changes(repo_root, commit_msg, "main")
-                        return # Esegui una sola delega per ciclo
+                        return 
                 
                 logging.info("Tutti i sotto-task del piano di sviluppo sono completati.")
-                # Trova il task 'planned' corrispondente per marcarlo come 'completed'
                 for phase in business_plan.get('phases', []):
                     for task in phase.get('tasks', []):
                         if task.get('status') == 'planned':
@@ -138,7 +138,6 @@ def main():
             logging.error(f"Errore durante la gestione del development_plan: {e}")
             return
     else:
-        # Se non ci sono piani, cerca un nuovo task da pianificare.
         for phase_index, phase in enumerate(business_plan.get('phases', [])):
             for task_index, task in enumerate(phase.get('tasks', [])):
                 if task.get('status') == 'pending':
