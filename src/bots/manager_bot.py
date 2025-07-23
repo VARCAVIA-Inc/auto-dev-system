@@ -43,14 +43,12 @@ def manage_pull_requests():
         for pr in prs:
             pr_number = pr['number']
             branch_name = pr['headRefName']
-            status = pr.get('status', 'PENDING').upper() # Lo stato può essere PENDING, SUCCESS, o FAILURE
+            status = pr.get('status', 'PENDING').upper()
 
             logging.info(f"Analizzo PR #{pr_number} dal branch '{branch_name}' con stato '{status}'.")
 
             if status == 'SUCCESS':
                 logging.info(f"PR #{pr_number} ha superato i test. Attivo il merge automatico.")
-                # Usa l'auto-merge: attende che tutti i check passino (se ce ne sono altri),
-                # poi fa il merge e cancella il branch.
                 merge_command = ['gh', 'pr', 'merge', str(pr_number), '--auto', '--squash', '--delete-branch']
                 merge_result = subprocess.run(merge_command, check=True, capture_output=True, text=True)
                 logging.info(f"✅ Merge per PR #{pr_number} attivato con successo. Dettagli: {merge_result.stdout.strip()}")
@@ -59,7 +57,6 @@ def manage_pull_requests():
                 comment_body = "I controlli automatici sono falliti. Chiudo questa PR per fare pulizia. Il task verrà probabilmente ri-pianificato."
                 subprocess.run(['gh', 'pr', 'comment', str(pr_number), '--body', comment_body], check=True)
                 subprocess.run(['gh', 'pr', 'close', str(pr_number)], check=True)
-                # La cancellazione del branch è ora gestita a parte
                 subprocess.run(['gh', 'repo', 'delete-branch', branch_name], check=True)
             else: # PENDING
                 logging.info(f"PR #{pr_number} è in attesa dei controlli. Nessuna azione per ora.")
@@ -67,9 +64,6 @@ def manage_pull_requests():
     except (subprocess.CalledProcessError, json.JSONDecodeError) as e:
         logging.error(f"Errore durante la gestione delle Pull Request: {e}", exc_info=True)
 
-
-# Il resto del file (delegate_to_operator, main, etc.) rimane invariato
-# ma lo includo per completezza, assicurati che il tuo file sia identico a questo.
 
 def delegate_to_operator(task_line):
     # ... (codice invariato)
