@@ -42,7 +42,7 @@ Esegui i seguenti sotto-task in ordine.
     - [x] `[tests/bots/test_operator_bot.py]` Scrivi test per le funzionalità principali dell'OperatorBot. Questo test verrà aggiornato nella fase successiva.
     - [x] `[src/bots/project_bot.py]`
     - [x] `[tests/bots/test_project_bot.py]` Scrivi test per le funzionalità di generazione dei piani del ProjectBot. Anche questo verrà aggiornato.
-    - [ ] `[src/utils/ai_utils.py]`
+    - [x] `[src/utils/ai_utils.py]`
     - [ ] `[tests/utils/test_ai_utils.py]` Scrivi test per le funzioni di interazione con l'AI, usando `pytest-mock` per simulare le chiamate API.
     - [ ] `[src/utils/email_sender.py]`
     - [ ] `[tests/utils/test_email_sender.py]` Scrivi test per il modulo di invio email, simulando il server SMTP.
