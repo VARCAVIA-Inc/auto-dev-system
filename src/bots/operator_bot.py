@@ -6,37 +6,30 @@ from git import Repo
 from src.utils.logging_utils import setup_logging
 from src.utils.ai_utils import get_gemini_model, generate_response, EXECUTION_MODEL
 
-def run_tests():
-    logging.info("Esecuzione dei test con pytest...")
-    try:
-        result = subprocess.run(['pytest'], capture_output=True, text=True)
-        if result.returncode == 0:
-            logging.info("✅ Tutti i test sono passati.")
-            return True
-        elif result.returncode == 5:
-            logging.warning("✅ Nessun test trovato da eseguire. Considerato successo per questa fase.")
-            return True
-        else:
-            logging.error(f"❌ Test falliti. Output:\n{result.stdout}\n{result.stderr}")
-            return False
-    except Exception as e:
-        logging.error(f"Errore imprevisto durante l'esecuzione dei test: {e}")
-        return False
-
-def create_pull_request(branch_name):
+def create_pull_request(branch_name, commit_message):
+    """Crea una Pull Request usando il commit message come titolo e corpo."""
     try:
         logging.info(f"Creazione della Pull Request per il branch '{branch_name}'...")
         env = os.environ.copy()
-        env['GH_TOKEN'] = os.getenv("GITHUB_TOKEN")
-        command = f"gh pr create --base main --head \"{branch_name}\" --fill"
-        result = subprocess.run(command, shell=True, capture_output=True, text=True, check=True, env=env)
-        logging.info(f"✅ Pull Request creata: {result.stdout.strip()}")
+        env['GH_TOKEN'] = os.getenv("BOT_GITHUB_TOKEN") # Usa il token del bot per l'autenticazione
+        
+        # Usa --title e --body per un controllo esplicito
+        command = [
+            'gh', 'pr', 'create',
+            '--base', 'main',
+            '--head', branch_name,
+            '--title', commit_message,
+            '--body', f"Questa PR è stata generata automaticamente per completare il task:\n`{os.getenv('TASK_DESCRIPTION')}`"
+        ]
+        
+        result = subprocess.run(command, capture_output=True, text=True, check=True, env=env)
+        logging.info(f"✅ Pull Request creata con successo: {result.stdout.strip()}")
         return True
     except subprocess.CalledProcessError as e:
         if "A pull request for" in e.stderr and "already exists" in e.stderr:
-            logging.warning("Una Pull Request per questo branch esiste già.")
+            logging.warning(f"Una Pull Request per il branch '{branch_name}' esiste già. Nessuna nuova azione richiesta.")
             return True
-        logging.error(f"❌ Creazione Pull Request fallita: {e.stderr}")
+        logging.error(f"❌ Errore durante la creazione della Pull Request: {e.stderr}")
         return False
 
 def main():
@@ -47,7 +40,8 @@ def main():
     repo_path = os.getenv('GITHUB_WORKSPACE', os.getcwd())
 
     if not all([branch_name, task_description, commit_message]):
-        logging.critical("Errore: mancano variabili d'ambiente necessarie."); exit(1)
+        logging.critical("Errore critico: mancano le variabili d'ambiente necessarie (BRANCH_NAME, TASK_DESCRIPTION, COMMIT_MESSAGE). Interruzione.")
+        exit(1)
         
     logging.info(f"--- OperatorBot: Avviato per il task: '{task_description}' ---")
     
@@ -56,52 +50,65 @@ def main():
         repo.git.config("user.name", "VARCAVIA Office Bot")
         repo.git.config("user.email", "bot@varcavia.com")
         
-        if branch_name not in repo.heads:
-            repo.create_head(branch_name).checkout()
-        else:
+        # Crea e passa al nuovo branch
+        if branch_name in repo.heads:
             repo.heads[branch_name].checkout()
-        logging.info(f"Spostato sul branch: {branch_name}")
+        else:
+            repo.create_head(branch_name).checkout()
+        logging.info(f"Spostato sul branch: '{branch_name}'")
         
-        match = re.search(r'\[(.*?)\]', task_description)
-        if not match: raise ValueError(f"Marcatore di tipo task non trovato in '{task_description}'.")
+        # Estrae il target e la descrizione dell'azione
+        match = re.search(r'\[(shell-command|.*?)\]\s*(.*)', task_description)
+        if not match or len(match.groups()) < 2:
+            raise ValueError(f"Formato del task non valido. Impossibile estrarre [target] e descrizione da: '{task_description}'")
         
-        task_type = match.group(1)
-        action_description = task_description.replace(f'[{task_type}]', '').strip()
+        target = match.group(1)
+        action_description = match.group(2).strip()
         
-        if task_type == 'shell-command':
-            logging.info(f"Eseguo comando shell: '{action_description}'")
+        if target == 'shell-command':
+            logging.info(f"Esecuzione del comando shell: '{action_description}'")
+            # Il comando è la descrizione stessa
             subprocess.run(action_description, shell=True, check=True, cwd=repo_path)
         else:
-            file_path = task_type
-            logging.info(f"Generazione contenuto per il file: {file_path}")
+            file_path = target
+            logging.info(f"Generazione contenuto per il file: '{file_path}' basato su: '{action_description}'")
             model = get_gemini_model(EXECUTION_MODEL)
-            generated_content = generate_response(model, f"Scrivi il codice/contenuto per questo task: '{action_description}'. Fornisci solo il codice puro, senza spiegazioni o markdown.")
-            if generated_content is None: raise Exception("Generazione del contenuto AI fallita.")
+            prompt = f"Sei un ingegnere software esperto. Il tuo unico compito è generare il contenuto completo di un file di codice basandoti su una specifica richiesta. Fornisci solo e unicamente il codice sorgente pulito, senza alcuna spiegazione, commento introduttivo o ```markdown fences```. Il codice deve essere pronto per essere scritto direttamente su un file.\n\nRichiesta: '{action_description}'\nContenuto del file '{file_path}':"
+            
+            generated_content = generate_response(model, prompt)
+            if generated_content is None:
+                raise Exception("La generazione del contenuto da parte dell'IA non ha prodotto risultati.")
+                
             full_path = os.path.join(repo_path, file_path)
             os.makedirs(os.path.dirname(full_path), exist_ok=True)
-            with open(full_path, 'w') as f: f.write(generated_content)
-            logging.info(f"File '{file_path}' creato/aggiornato.")
+            with open(full_path, 'w') as f:
+                f.write(generated_content)
+            logging.info(f"File '{file_path}' creato/aggiornato con successo.")
         
-        if not run_tests():
-            raise Exception("I test unitari sono falliti. Annullamento della Pull Request.")
-
+        # L'OPERATORE NON ESEGUE PIÙ I TEST. LA VALIDAZIONE È FATTA NELLA PR.
+        
         repo.git.add(all=True)
         if not repo.is_dirty(untracked_files=True):
-            logging.warning("Nessuna modifica rilevata. Task completato senza PR."); return
+            logging.warning("Nessuna modifica al codice rilevata. Il task potrebbe essere già stato completato o non ha prodotto codice. Concludo il task senza creare una PR.")
+            return
             
         repo.git.commit('-m', commit_message)
-        logging.info(f"Commit creato: '{commit_message}'")
+        logging.info(f"Commit creato con messaggio: '{commit_message}'")
         
-        remote_url = f"https://x-access-token:{os.getenv('GITHUB_TOKEN')}@github.com/{os.getenv('GITHUB_REPOSITORY')}.git"
+        # Esegue il push sul branch remoto
+        remote_url = f"https://x-access-token:{os.getenv('BOT_GITHUB_TOKEN')}@github.com/{os.getenv('GITHUB_REPOSITORY')}.git"
         repo.git.push(remote_url, f'HEAD:{branch_name}', '--force')
-        logging.info(f"Push del branch '{branch_name}' completato.")
+        logging.info(f"Push del branch '{branch_name}' al remote completato.")
         
-        create_pull_request(branch_name)
+        # Crea la Pull Request
+        if not create_pull_request(branch_name, commit_message):
+            raise Exception("Fallimento critico nella creazione della Pull Request.")
 
     except Exception as e:
-        logging.critical(f"❌ Errore critico durante l'esecuzione del task: {e}", exc_info=True); exit(1)
+        logging.critical(f"❌ Errore critico durante l'esecuzione del task: {e}", exc_info=True)
+        exit(1)
 
-    logging.info(f"--- OperatorBot: Task completato. ---")
+    logging.info(f"--- OperatorBot: Task completato e Pull Request creata/aggiornata. In attesa della validazione. ---")
 
 if __name__ == "__main__":
     main()
