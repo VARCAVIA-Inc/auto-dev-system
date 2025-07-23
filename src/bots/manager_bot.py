@@ -45,21 +45,15 @@ def manage_pull_requests():
 
             logging.info(f"Analizzo PR #{pr_number} dal branch '{branch_name}' con stato CI '{ci_status}' e etichette {labels}.")
 
-            if 'status: failed' in labels:
-                logging.warning(f"PR #{pr_number} è marcata come fallita. Chiudo la PR e resetto il task.")
-                subprocess.run(['gh', 'pr', 'close', str(pr_number)], check=True)
-                subprocess.run(['gh', 'repo', 'delete-branch', branch_name], check=True)
-                # Qui l'AuditBot in futuro potrebbe analizzare il fallimento
-            
-            elif ci_status == 'SUCCESS' and 'status: needs-review' in labels:
+            if 'ci: passed' in labels:
                 logging.info(f"PR #{pr_number} ha superato i test. Eseguo il merge.")
                 merge_command = ['gh', 'pr', 'merge', str(pr_number), '--squash', '--delete-branch']
                 subprocess.run(merge_command, check=True)
                 logging.info(f"✅ Merge per PR #{pr_number} completato.")
             
-            elif ci_status == 'FAILURE':
-                 logging.warning(f"PR #{pr_number} ha fallito i test CI. Chiudo la PR.")
-                 comment_body = "I test automatici nel workflow di validazione sono falliti. Chiudo questa PR."
+            elif 'ci: failed' in labels or 'status: failed' in labels:
+                 logging.warning(f"PR #{pr_number} ha fallito i test o l'esecuzione. Chiudo la PR.")
+                 comment_body = "Questa PR ha fallito i controlli automatici o l'esecuzione del task. Verrà chiusa e il task sarà riprogrammato."
                  subprocess.run(['gh', 'pr', 'comment', str(pr_number), '--body', comment_body], check=True)
                  subprocess.run(['gh', 'pr', 'close', str(pr_number)], check=True)
                  subprocess.run(['gh', 'repo', 'delete-branch', branch_name], check=True)
@@ -91,6 +85,7 @@ def delegate_to_operator(task: dict):
         return True
     except subprocess.CalledProcessError as e:
         logging.error(f"❌ Errore attivazione OperatorBot: {e.stderr}")
+        state_utils.update_task_status(task_line_index, "FAILED")
         return False
 
 def main():
@@ -106,7 +101,7 @@ def main():
         with open(business_plan_path, 'r') as file:
             business_plan = yaml.safe_load(file)
     except FileNotFoundError:
-        logging.critical(f"business_plan.yaml non trovato. Interruzione.")
+        logging.critical("business_plan.yaml non trovato. Interruzione.")
         return
 
     # Se un piano esiste, la priorità è eseguirlo
@@ -114,10 +109,10 @@ def main():
         next_task = state_utils.find_next_task()
         if next_task:
             delegate_to_operator(next_task)
-            commit_and_push_changes(repo_root, f"chore(manager): Delegato task '{next_task['description'][:40]}...'", "main")
+            # Non facciamo più il commit qui, lo stato è già gestito
         else:
             logging.info("Tutti i sotto-task del piano di sviluppo sono completati o in corso.")
-            # ... (logica per marcare il task del business plan come 'completed')
+            # ... (logica futura per marcare il task del business plan come 'completed')
     else:
         # Altrimenti, cerca un nuovo task da pianificare
         for p_idx, phase in enumerate(business_plan.get('phases', [])):
