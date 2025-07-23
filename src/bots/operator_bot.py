@@ -12,9 +12,6 @@ def run_tests():
     try:
         result = subprocess.run(['pytest'], capture_output=True, text=True)
         
-        # --- MODIFICA CHIAVE ---
-        # Pytest esce con codice 5 se non trova test. Lo consideriamo un successo
-        # nelle fasi iniziali dello sviluppo.
         if result.returncode == 0:
             logging.info("✅ Tutti i test sono passati.")
             return True
@@ -30,6 +27,7 @@ def run_tests():
         return False
 
 def create_pull_request(branch_name):
+    """Crea una Pull Request usando la CLI di GitHub."""
     # (Codice invariato)
     try:
         logging.info(f"Creazione della Pull Request per il branch '{branch_name}'...")
@@ -47,7 +45,6 @@ def create_pull_request(branch_name):
         return False
 
 def main():
-    # (La funzione main rimane quasi identica, la ometto per brevità ma va inclusa nel file)
     setup_logging()
     branch_name = os.getenv("BRANCH_NAME")
     task_description = os.getenv("TASK_DESCRIPTION")
@@ -71,7 +68,7 @@ def main():
         logging.info(f"Spostato sul branch: {branch_name}")
         
         match = re.search(r'\[(.*?)\]', task_description)
-        if not match: raise ValueError("Marcatore di tipo task non trovato.")
+        if not match: raise ValueError(f"Marcatore di tipo task non trovato in '{task_description}'.")
         
         task_type = match.group(1)
         action_description = task_description.replace(f'[{task_type}]', '').strip()
@@ -96,15 +93,18 @@ def main():
             raise Exception("I test unitari sono falliti. Annullamento della Pull Request.")
 
         repo.git.add(all=True)
-        if not repo.index.diff("HEAD"):
+        if not repo.index.diff("HEAD") and not repo.untracked_files:
             logging.warning("Nessuna modifica rilevata. Task completato senza PR."); return
             
-        repo.index.commit('-m', commit_message)
+        # --- CORREZIONE CHIAVE ---
+        # Usiamo la sintassi corretta e di alto livello per il commit
+        repo.git.commit('-m', commit_message)
+        # -------------------------
+        
         logging.info(f"Commit creato: '{commit_message}'")
         
         remote_url = f"https://x-access-token:{os.getenv('GITHUB_TOKEN')}@github.com/{os.getenv('GITHUB_REPOSITORY')}.git"
         origin = repo.remote(name='origin')
-        # Usiamo force push per aggiornare il branch con ogni nuovo micro-task
         origin.push(refspec=f'{branch_name}:{branch_name}', url=remote_url, force=True)
         logging.info(f"Push del branch '{branch_name}' completato.")
         
