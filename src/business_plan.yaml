@@ -1,5 +1,5 @@
 project_name: VARCAVIA Office - MVP Test
-description: "Missione di test end-to-end per validare il ciclo completo."
+description: "Missione di test end-to-end per validare il ciclo completo di sviluppo, test e integrazione autonoma."
 
 phases:
   - name: "Fase 1: Validazione del Ciclo Completo"

@@ -5,7 +5,7 @@ on:
     inputs:
       branch_name: { required: true }
       task_description: { required: true }
-      commit_message: { required: true }
+      task_line_index: { required: true }
 
 jobs:
   execute_task:
@@ -30,7 +30,7 @@ jobs:
         env:
           BRANCH_NAME: ${{ github.event.inputs.branch_name }}
           TASK_DESCRIPTION: ${{ github.event.inputs.task_description }}
-          COMMIT_MESSAGE: ${{ github.event.inputs.commit_message }}
+          TASK_LINE_INDEX: ${{ github.event.inputs.task_line_index }}
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
           GCP_PROJECT: 'varcavia-office-bc6xvv'
           PYTHONPATH: ${{ github.workspace }}

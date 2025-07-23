@@ -1,17 +1,13 @@
 name: 1. Manager Bot Orchestration
 
 on:
-  # Trigger principale per avviare nuove missioni
   push:
     branches: [ main ]
     paths:
       - 'src/business_plan.yaml'
   
-  # Trigger per l'attivazione manuale
   workflow_dispatch:
 
-  # --- POTENZIAMENTO CHIAVE ---
-  # Trigger reattivo: si attiva ISTANTANEAMENTE quando il workflow di validazione finisce.
   workflow_run:
     workflows: ["4. PR Validation"]
     types:
