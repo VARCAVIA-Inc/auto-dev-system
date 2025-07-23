@@ -7,11 +7,10 @@ from src.utils.logging_utils import setup_logging
 from src.utils.ai_utils import get_gemini_model, generate_response, EXECUTION_MODEL
 
 def run_tests():
-    """Esegue pytest e gestisce i codici di uscita in modo intelligente."""
+    # ... (Codice invariato, lo ometto per brevità ma va lasciato nel file)
     logging.info("Esecuzione dei test con pytest...")
     try:
         result = subprocess.run(['pytest'], capture_output=True, text=True)
-        
         if result.returncode == 0:
             logging.info("✅ Tutti i test sono passati.")
             return True
@@ -21,14 +20,12 @@ def run_tests():
         else:
             logging.error(f"❌ Test falliti. Output:\n{result.stdout}\n{result.stderr}")
             return False
-            
     except Exception as e:
         logging.error(f"Errore imprevisto durante l'esecuzione dei test: {e}")
         return False
 
 def create_pull_request(branch_name):
-    """Crea una Pull Request usando la CLI di GitHub."""
-    # (Codice invariato)
+    # ... (Codice invariato, lo ometto per brevità ma va lasciato nel file)
     try:
         logging.info(f"Creazione della Pull Request per il branch '{branch_name}'...")
         env = os.environ.copy()
@@ -96,16 +93,16 @@ def main():
         if not repo.index.diff("HEAD") and not repo.untracked_files:
             logging.warning("Nessuna modifica rilevata. Task completato senza PR."); return
             
-        # --- CORREZIONE CHIAVE ---
-        # Usiamo la sintassi corretta e di alto livello per il commit
         repo.git.commit('-m', commit_message)
-        # -------------------------
-        
         logging.info(f"Commit creato: '{commit_message}'")
         
         remote_url = f"https://x-access-token:{os.getenv('GITHUB_TOKEN')}@github.com/{os.getenv('GITHUB_REPOSITORY')}.git"
-        origin = repo.remote(name='origin')
-        origin.push(refspec=f'{branch_name}:{branch_name}', url=remote_url, force=True)
+        
+        # --- CORREZIONE CHIAVE ---
+        # Usiamo un metodo di push più diretto che rispecchia il comando da terminale
+        repo.git.push(remote_url, f'{branch_name}:{branch_name}', '--force')
+        # -------------------------
+
         logging.info(f"Push del branch '{branch_name}' completato.")
         
         create_pull_request(branch_name)
