@@ -19,7 +19,7 @@ Esegui i seguenti sotto-task in ordine.
     - [x] `[shell-command]` `pip install -r requirements.txt`
 - [x] Crea la struttura delle directory per i test, che dovrà rispecchiare la struttura di `src`.
     - [x] `[shell-command]` `mkdir tests`
-- [ ] Crea i file di inizializzazione per rendere le directory dei test dei package Python.
+- [x] Crea i file di inizializzazione per rendere le directory dei test dei package Python.
     - [ ] `[tests/__init__.py]`
 - [ ] Configura `pytest` per riconoscere automaticamente la directory dei test.
     - [ ] `[pytest.ini]` Crea questo file nella root del progetto con il seguente contenuto:
