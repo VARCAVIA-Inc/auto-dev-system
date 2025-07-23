@@ -1,14 +1,21 @@
 name: 1. Manager Bot Orchestration
 
 on:
+  # Trigger principale per avviare nuove missioni
   push:
     branches: [ main ]
-    paths-ignore:
-      - 'README.md'
-      - 'development_plan.md'
+    paths:
+      - 'src/business_plan.yaml'
+  
+  # Trigger per l'attivazione manuale
   workflow_dispatch:
-  schedule:
-    - cron: '*/15 * * * *'
+
+  # --- POTENZIAMENTO CHIAVE ---
+  # Trigger reattivo: si attiva ISTANTANEAMENTE quando il workflow di validazione finisce.
+  workflow_run:
+    workflows: ["4. PR Validation"]
+    types:
+      - completed
 
 jobs:
   run_manager_bot:
