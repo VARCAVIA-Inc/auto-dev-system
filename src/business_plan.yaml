@@ -5,4 +5,4 @@ phases:
     tasks:
       - description: "Creare un nuovo modulo in `src/utils/math_utils.py` che contenga una funzione `add(a, b)`. Creare anche un file di test `tests/utils/test_math_utils.py` che verifichi il corretto funzionamento."
         agent: ManagerBot
-        status: pending
+        status: completed
