@@ -26,7 +26,7 @@ def add(a: float, b: float) -> float:
     """
     return a + b
 ```
-- [ ][tests/utils/test_math_utils.py] Crea i test per la funzione add.
+- [P][tests/utils/test_math_utils.py] Crea i test per la funzione add.
 ```python
 # tests/utils/test_math_utils.py
 
