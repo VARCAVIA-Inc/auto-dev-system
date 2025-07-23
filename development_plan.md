@@ -22,7 +22,7 @@ Esegui i seguenti sotto-task in ordine.
 - [x] Crea i file di inizializzazione per rendere le directory dei test dei package Python.
     - [x] `[tests/__init__.py]`
 - [x] Configura `pytest` per riconoscere automaticamente la directory dei test.
-    - [ ] `[pytest.ini]` Crea questo file nella root del progetto con il seguente contenuto:
+    - [x] `[pytest.ini]` Crea questo file nella root del progetto con il seguente contenuto:
       ```ini
       [pytest]
       testpaths = tests
