@@ -17,7 +17,7 @@ Esegui i seguenti sotto-task in ordine.
     - [x] `[requirements.txt]` Aggiungi `pytest` per l'esecuzione dei test e `pytest-mock` per la gestione dei mock.
 - [x] Installa le nuove dipendenze nell'ambiente di sviluppo.
     - [x] `[shell-command]` `pip install -r requirements.txt`
-- [ ] Crea la struttura delle directory per i test, che dovrà rispecchiare la struttura di `src`.
+- [x] Crea la struttura delle directory per i test, che dovrà rispecchiare la struttura di `src`.
     - [ ] `[shell-command]` `mkdir tests`
 - [ ] Crea i file di inizializzazione per rendere le directory dei test dei package Python.
     - [ ] `[tests/__init__.py]`
