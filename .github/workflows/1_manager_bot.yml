@@ -5,6 +5,7 @@ on:
     branches: [ main ]
     paths-ignore:
       - 'README.md'
+      - 'development_plan.md'
   workflow_dispatch:
   schedule:
     - cron: '*/15 * * * *'

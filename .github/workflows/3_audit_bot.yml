@@ -3,7 +3,7 @@ name: 3. Audit Bot Supervision
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 3 * * *'
+    - cron: '0 3 * * *' # Ogni notte alle 3
 
 jobs:
   run_audit_bot:
@@ -26,7 +26,6 @@ jobs:
         env:
           GCP_PROJECT: 'varcavia-office-bc6xvv'
           PYTHONPATH: ${{ github.workspace }}
-          # Segreti per le email
           EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
           EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
           EMAIL_USERNAME: ${{ secrets.EMAIL_USERNAME }}

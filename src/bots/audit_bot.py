@@ -14,7 +14,7 @@ def get_system_status():
         runs_command = ['gh', 'run', 'list', '--workflow', '1_manager_bot.yml', '--limit', '5', '--json', 'status,conclusion,displayTitle,url']
         runs_result = subprocess.run(runs_command, capture_output=True, text=True, check=True)
         runs_data = json.loads(runs_result.stdout)
-        prs_command = ['gh', 'pr', 'list', '--head', 'autodev/', '--state', 'open', '--json', 'title,url,createdAt']
+        prs_command = ['gh', 'pr', 'list', '--head', 'autodev/', '--state', 'open', '--json', 'title,url,createdAt,statusCheckRollup']
         prs_result = subprocess.run(prs_command, capture_output=True, text=True)
         prs_data = json.loads(prs_result.stdout) if prs_result.stdout else []
         return {"runs": runs_data, "prs": prs_data}
@@ -31,6 +31,7 @@ def generate_status_report(status_data):
         prompt = f"""
         Sei l'AuditBot di VARCAVIA Office, un'IA responsabile della supervisione.
         Analizza i seguenti dati JSON sullo stato dei workflow e delle Pull Request.
+        'statusCheckRollup' indica lo stato dei test CI sulla PR.
 
         Dati:
         ---
@@ -39,10 +40,10 @@ def generate_status_report(status_data):
 
         Scrivi un'email chiara e professionale per un dirigente. L'email deve includere:
         1.  **Oggetto:** "VARCAVIA Office - Report Operativo".
-        2.  **Panoramica:** Un riassunto dello stato generale del sistema.
+        2.  **Panoramica:** Un riassunto dello stato generale del sistema (es. "Operativo", "In Stallo", "Errore Critico").
         3.  **Attività Recenti:** Descrivi l'esito degli ultimi workflow.
-        4.  **Lavoro in Corso:** Elenca le Pull Request aperte.
-        5.  **Prossimi Passaggi:** Indica la prossima azione che il sistema intraprenderà.
+        4.  **Lavoro in Corso:** Elenca le Pull Request aperte e lo stato dei loro test. Se non ce ne sono, menzionalo.
+        5.  **Prossimi Passaggi:** Sulla base dello stato attuale, indica la prossima azione che il sistema intraprenderà.
         """
         report = generate_response(model, prompt)
         return report
@@ -53,7 +54,7 @@ def generate_status_report(status_data):
 def send_email_report(report_content):
     host, port, user, password, sender, receiver = (os.getenv(k) for k in ['EMAIL_HOST', 'EMAIL_PORT', 'EMAIL_USERNAME', 'EMAIL_PASSWORD', 'SENDER_EMAIL', 'RECEIVER_EMAIL'])
     if not all([host, port, user, password, sender, receiver]):
-        logging.error("Mancano le variabili d'ambiente per l'invio email.")
+        logging.error("Mancano le variabili d'ambiente per l'invio email. Salto l'invio.")
         return
     try:
         msg = MIMEText(report_content, 'plain', 'utf-8')
@@ -76,6 +77,10 @@ def main():
     if status_data:
         report_content = generate_status_report(status_data)
         if report_content:
+            # Stampa il report nei log oltre a inviarlo
+            print("--- REPORT DI STATO GENERATO ---")
+            print(report_content)
+            print("--- FINE REPORT ---")
             send_email_report(report_content)
     logging.info("--- AuditBot: Ciclo completato. ---")
 
