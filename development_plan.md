@@ -9,7 +9,7 @@ Questo piano descrive i passaggi necessari per creare un nuovo modulo di utilit�
 - [x][shell-command] mkdir -p tests/utils
 - [x][shell-command] touch tests/__init__.py
 - [x][shell-command] touch tests/utils/__init__.py
-- [ ][src/utils/math_utils.py] Crea il modulo per le utilità matematiche.
+- [P][src/utils/math_utils.py] Crea il modulo per le utilità matematiche.
 ```python
 # src/utils/math_utils.py
 
