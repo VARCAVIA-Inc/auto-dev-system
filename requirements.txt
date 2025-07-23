@@ -1,7 +1,25 @@
-PyYAML
-PyGithub
-google-cloud-aiplatform
-google-auth
-GitPython
-secure-smtplib
-pytest
+import os
+
+file_path = 'requirements.txt'
+
+pytest_present = False
+lines = []
+
+if os.path.exists(file_path):
+    with open(file_path, 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            clean_line = line.strip().split('#')[0].strip()
+            if clean_line.lower().startswith('pytest'):
+                remainder = clean_line[len('pytest'):].strip()
+                if not remainder or remainder.startswith(('=', '>', '<', '~', '!')):
+                    pytest_present = True
+                    break
+
+if not pytest_present:
+    if lines and not lines[-1].endswith('\n'):
+        lines.append('\n')
+    lines.append('pytest\n')
+
+    with open(file_path, 'w') as f:
+        f.writelines(lines)
