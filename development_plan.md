@@ -30,7 +30,7 @@ Esegui i seguenti sotto-task in ordine.
 
 ### Fase 2: Creazione dei Test Unitari per il Codice Esistente
 
-- [ ] Crea le sotto-directory necessarie nella cartella `tests` per rispecchiare la struttura di `src`.
+- [x] Crea le sotto-directory necessarie nella cartella `tests` per rispecchiare la struttura di `src`.
     - [ ] `[shell-command]` `mkdir tests/bots`
     - [ ] `[shell-command]` `mkdir tests/utils`
 - [ ] Scrivi i test unitari per ogni modulo esistente. Per ogni file `.py` in `src`, crea un file `test_*.py` in `tests`.
