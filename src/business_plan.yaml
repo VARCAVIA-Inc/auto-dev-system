@@ -1,9 +1,8 @@
 project_name: VARCAVIA Office - MVP Test
-description: "Missione di test end-to-end per validare il ciclo completo di sviluppo, test e integrazione autonoma."
-
+description: "Missione di test end-to-end per validare il ciclo completo."
 phases:
   - name: "Fase 1: Validazione del Ciclo Completo"
     tasks:
-      - description: "Creare un nuovo modulo in `src/utils/math_utils.py` che contenga una funzione `add(a, b)` che restituisce la somma di due numeri. Creare anche un file di test `tests/utils/test_math_utils.py` che verifichi il corretto funzionamento della funzione `add`."
+      - description: "Creare un nuovo modulo in `src/utils/math_utils.py` che contenga una funzione `add(a, b)`. Creare anche un file di test `tests/utils/test_math_utils.py` che verifichi il corretto funzionamento."
         agent: ManagerBot
         status: pending
