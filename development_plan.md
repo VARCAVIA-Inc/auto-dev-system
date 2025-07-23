@@ -14,7 +14,7 @@ Esegui i seguenti sotto-task in ordine.
 ### Fase 1: Configurazione dell'Ambiente di Testing
 
 - [x] Aggiorna il file delle dipendenze per includere le librerie di testing.
-    - [ ] `[requirements.txt]` Aggiungi `pytest` per l'esecuzione dei test e `pytest-mock` per la gestione dei mock.
+    - [x] `[requirements.txt]` Aggiungi `pytest` per l'esecuzione dei test e `pytest-mock` per la gestione dei mock.
 - [ ] Installa le nuove dipendenze nell'ambiente di sviluppo.
     - [ ] `[shell-command]` `pip install -r requirements.txt`
 - [ ] Crea la struttura delle directory per i test, che dovrà rispecchiare la struttura di `src`.
