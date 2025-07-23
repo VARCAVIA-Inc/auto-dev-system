@@ -1,72 +1,14 @@
-Assolutamente. Ecco il piano tecnico per gli OperatorBot.
+```markdown
+# Piano di Sviluppo Tecnico
 
----
+**Obiettivo di Business:** Crea un file hello.py che stampa Hello World e un test per verificarlo.
 
-**A:** OperatorBot
-**DA:** ProjectBot (CTO)
-**OGGETTO:** Piano Tecnico per l'Implementazione dello Sviluppo Guidato dai Test (TDD)
+Ecco la lista dei task per raggiungere questo obiettivo:
 
-OperatorBot,
-questo è il piano d'azione per integrare un workflow TDD nel nostro processo di sviluppo. L'obiettivo è migliorare la qualità e l'affidabilità del nostro codice. Ogni modifica al codice sorgente dovrà essere accompagnata da test unitari. L'esecuzione dei test diventerà un passaggio obbligatorio prima di finalizzare qualsiasi task di sviluppo.
-
-Esegui i seguenti sotto-task in ordine.
-
-### Fase 1: Configurazione dell'Ambiente di Testing
-
-- [x] Aggiorna il file delle dipendenze per includere le librerie di testing.
-    - [x] `[requirements.txt]` Aggiungi `pytest` per l'esecuzione dei test e `pytest-mock` per la gestione dei mock.
-- [x] Installa le nuove dipendenze nell'ambiente di sviluppo.
-    - [x] `[shell-command]` `pip install -r requirements.txt`
-- [x] Crea la struttura delle directory per i test, che dovrà rispecchiare la struttura di `src`.
-    - [x] `[shell-command]` `mkdir tests`
-- [x] Crea i file di inizializzazione per rendere le directory dei test dei package Python.
-    - [x] `[tests/__init__.py]`
-- [x] Configura `pytest` per riconoscere automaticamente la directory dei test.
-    - [x] `[pytest.ini]` Crea questo file nella root del progetto con il seguente contenuto:
-      ```ini
-      [pytest]
-      testpaths = tests
-      ```
-
-### Fase 2: Creazione dei Test Unitari per il Codice Esistente
-
-- [x] Crea le sotto-directory necessarie nella cartella `tests` per rispecchiare la struttura di `src`.
-    - [x] `[shell-command]` `mkdir tests/bots`
-    - [x] `[shell-command]` `mkdir tests/utils`
-- [x] Scrivi i test unitari per ogni modulo esistente. Per ogni file `.py` in `src`, crea un file `test_*.py` in `tests`.
-    - [x] `[src/bots/audit_bot.py]`
-    - [x] `[tests/bots/test_audit_bot.py]` Scrivi test per verificare la logica di audit.
-    - [x] `[src/bots/manager_bot.py]`
-    - [x] `[tests/bots/test_manager_bot.py]` Scrivi test per verificare la logica del ManagerBot.
-    - [x] `[src/bots/operator_bot.py]`
-    - [x] `[tests/bots/test_operator_bot.py]` Scrivi test per le funzionalità principali dell'OperatorBot. Questo test verrà aggiornato nella fase successiva.
-    - [x] `[src/bots/project_bot.py]`
-    - [x] `[tests/bots/test_project_bot.py]` Scrivi test per le funzionalità di generazione dei piani del ProjectBot. Anche questo verrà aggiornato.
-    - [x] `[src/utils/ai_utils.py]`
-    - [x] `[tests/utils/test_ai_utils.py]` Scrivi test per le funzioni di interazione con l'AI, usando `pytest-mock` per simulare le chiamate API.
-    - [x] `[src/utils/email_sender.py]`
-    - [x] `[tests/utils/test_email_sender.py]` Scrivi test per il modulo di invio email, simulando il server SMTP.
-    - [x] `[src/utils/git_utils.py]`
-    - [ ] `[tests/utils/test_git_utils.py]` Scrivi test per le utility di Git, simulando i comandi di sistema.
-    - [ ] `[src/utils/logging_utils.py]`
-    - [ ] `[tests/utils/test_logging_utils.py]` Scrivi test per verificare che il logging sia configurato e funzioni come previsto.
-    - [ ] `[src/utils/report_generator.py]`
-    - [ ] `[tests/utils/test_report_generator.py]` Scrivi test per la generazione dei report.
-
-### Fase 3: Aggiornamento della Logica dei Bot
-
-- [ ] Potenzia il `ProjectBot` per generare automaticamente i task di test.
-    - [ ] `[src/bots/project_bot.py]` Modifica il ProjectBot per generare, oltre al task per il file di codice sorgente, un task aggiuntivo per la creazione del file di test unitario corrispondente (es. `test_mio_file.py`) nella directory `tests`.
-    - [ ] `[tests/bots/test_project_bot.py]` Aggiorna i test per `ProjectBot` per verificare che il nuovo comportamento di generazione dei task di test sia implementato correttamente.
-- [ ] Potenzia l' `OperatorBot` per eseguire i test come parte del suo workflow.
-    - [ ] `[src/bots/operator_bot.py]` Integra il comando `pytest` nel workflow dell'OperatorBot. Il comando deve essere eseguito dopo la scrittura/modifica del codice e prima del commit. Se `pytest` restituisce un exit code diverso da zero, il bot deve interrompere l'operazione e segnalare il fallimento.
-    - [ ] `[tests/bots/test_operator_bot.py]` Aggiorna i test per `OperatorBot` per simulare e verificare il nuovo workflow: un caso in cui i test passano e il processo continua, e un caso in cui i test falliscono e il processo si interrompe correttamente.
-
-### Fase 4: Esecuzione e Convalida Finale
-
-- [ ] Esegui l'intera suite di test per assicurarti che tutte le modifiche siano integrate correttamente e che tutti i test passino.
-    - [ ] `[shell-command]` `pytest`
-- [ ] Aggiorna la documentazione principale del progetto.
-    - [ ] `[README.md]` Aggiungi una sezione "Testing" che spieghi come eseguire i test e descriva il nuovo workflow TDD.
-
-Fine del piano. Procedi con l'esecuzione.
+- [ ] [src/hello.py] Crea un nuovo file che definisce una funzione `get_greeting()` che restituisce la stringa "Hello World!" e, all'interno di un blocco `if __name__ == "__main__":`, stampa il risultato della chiamata a questa funzione.
+- [ ] [shell-command] mkdir -p tests
+- [ ] [tests/__init__.py] Crea un file vuoto per contrassegnare la directory `tests` come un pacchetto Python.
+- [ ] [tests/test_hello.py] Crea un file di test che importa la funzione `get_greeting` da `src.hello`. Aggiungi un test `test_get_greeting` che verifica che la funzione restituisca correttamente la stringa "Hello World!".
+- [ ] [requirements.txt] Assicurati che `pytest` sia presente nel file. Se non c'è, aggiungilo.
+- [ ] [shell-command] python3 -m pytest tests/test_hello.py
+```
