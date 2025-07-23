@@ -2,7 +2,7 @@ project_name: VARCAVIA Office - Fase 2
 description: Missione di auto-miglioramento per implementare il ciclo di Test-Driven
   Development autonomo.
 core_principles:
-- "Ogni nuova funzionalit\xE0 deve essere accompagnata da test."
+- "Ogni nuova funzionalità deve essere accompagnata da test."
 - Il codice non viene integrato se i test non passano.
 operating_model:
 - name: Manager_Bot
@@ -21,4 +21,4 @@ phases:
       aver scritto il codice e prima di creare la PR. Il workflow dell'OperatorBot
       deve fallire se i test non passano.
     agent: ManagerBot
-    status: completed
+    status: pending
