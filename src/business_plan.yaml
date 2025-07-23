@@ -1,14 +1,9 @@
-project_name: VARCAVIA Office - Fase 2.2
-description: "Missione di auto-miglioramento per implementare l'integrazione continua autonoma."
-core_principles:
-- "Il codice viene integrato solo se i test automatici hanno successo."
-operating_model:
-- name: Manager_Bot
-  role: "CEO e Responsabile Integrazione"
-# ... (gli altri bot rimangono invariati)
+project_name: VARCAVIA Office - MVP Test
+description: "Missione di test end-to-end per validare il ciclo completo di sviluppo, test e integrazione autonoma."
+
 phases:
-- name: "Fase 2.2: Implementazione Auto-Merge"
-  tasks:
-  - description: "Potenziare il ManagerBot per leggere lo stato dei controlli CI di una Pull Request. Se i controlli hanno successo ('SUCCESS'), il bot deve unire (merge) la PR usando il metodo 'squash' e cancellare il branch associato. Se i controlli falliscono, deve chiudere la PR."
-    agent: ManagerBot
-    status: pending
+  - name: "Fase 1: Validazione del Ciclo Completo"
+    tasks:
+      - description: "Creare un nuovo modulo in `src/utils/math_utils.py` che contenga una funzione `add(a, b)` che restituisce la somma di due numeri. Creare anche un file di test `tests/utils/test_math_utils.py` che verifichi il corretto funzionamento della funzione `add`."
+        agent: ManagerBot
+        status: pending

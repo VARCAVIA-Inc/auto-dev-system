@@ -7,9 +7,7 @@ from src.utils.git_utils import commit_and_push_changes
 from src.utils.ai_utils import get_gemini_model, generate_response, PLANNING_MODEL
 
 def is_plan_valid(plan_text: str) -> bool:
-    """
-    Controlla se un piano di sviluppo generato è valido usando una regex più severa.
-    """
+    """Controlla se un piano di sviluppo generato è valido usando una regex severa."""
     logging.info("Validazione del piano di sviluppo generato...")
     has_tasks = False
     for line in plan_text.splitlines():
@@ -18,20 +16,14 @@ def is_plan_valid(plan_text: str) -> bool:
             continue
         if line.startswith("- [ ]"):
             has_tasks = True
-            # --- CONTROLLO DI VALIDITÀ POTENZIATO ---
-            # Questa regex assicura che la riga inizi con '- [ ]' seguito
-            # immediatamente dal marcatore [tipo], senza caratteri spuri in mezzo.
             if not re.match(r'^\s*-\s*\[\s*\]\s*\[(.+?)\]', line):
-                logging.error(f"Riga di task non valida trovata nel piano: '{line}'. Formato non corretto.")
+                logging.error(f"Riga di task non valida trovata: '{line}'. Formato non corretto.")
                 return False
-    
     if not has_tasks:
-        logging.error("Validazione fallita: il piano non contiene nessun task azionabile ('- [ ]').")
-
+        logging.error("Validazione fallita: il piano non contiene task azionabili ('- [ ]').")
     return has_tasks
 
-def update_business_plan_status(task_index, phase_index, new_status="planned"):
-    # (Codice invariato, lo ometto per brevità ma va lasciato nel file)
+def update_business_plan_status(task_index, phase_index, new_status):
     repo_root = os.getenv('GITHUB_WORKSPACE', os.getcwd())
     business_plan_path = os.path.join(repo_root, 'src', 'business_plan.yaml')
     try:
@@ -41,35 +33,29 @@ def update_business_plan_status(task_index, phase_index, new_status="planned"):
         with open(business_plan_path, 'w') as file:
             yaml.dump(plan, file, default_flow_style=False, sort_keys=False)
         logging.info(f"Stato del task aggiornato a '{new_status}'.")
-        return True
     except Exception as e:
         logging.error(f"Errore durante l'aggiornamento del Business Plan: {e}", exc_info=True)
-        return False
 
 def run_project_bot(task_details, task_index, phase_index):
     task_description = task_details.get('description', 'N/A')
     logging.info(f"--- ProjectBot: Inizio Pianificazione per '{task_description}' ---")
-
     try:
         gemini_model = get_gemini_model(PLANNING_MODEL)
-    except Exception:
-        update_business_plan_status(task_index, phase_index, "planning_failed")
-        return
-
-    repo_root = os.getenv('GITHUB_WORKSPACE', os.getcwd())
-    try:
+        repo_root = os.getenv('GITHUB_WORKSPACE', os.getcwd())
         result = subprocess.run(['ls', '-R'], cwd=repo_root, capture_output=True, text=True, check=True)
         file_structure = result.stdout
     except Exception as e:
-        file_structure = f"Impossibile leggere la struttura dei file: {e}"
+        logging.error(f"Errore nella preparazione della pianificazione: {e}")
+        update_business_plan_status(task_index, phase_index, "planning_failed")
+        return
 
     prompt = (
-        f"Sei il ProjectBot (CTO). Traduci un obiettivo di business in un piano tecnico in Markdown per i tuoi OperatorBot.\n"
+        f"Sei il ProjectBot (CTO). Traduci un obiettivo di business in un piano tecnico in Markdown per gli OperatorBot.\n"
         f"Struttura del progetto attuale:\n```\n{file_structure}\n```\n\n"
         f"Obiettivo di Business: '{task_description}'.\n\n"
         f"**REGOLE CRITICHE E OBBLIGATORIE PER IL PIANO:**\n"
-        f"1. Il piano DEVE contenere una lista di sotto-task azionabili.\n"
-        f"2. OGNI SINGOLO SOTTO-TASK DEVE iniziare con '- [ ]' seguito IMMEDIATAMENTE da un marcatore tra parentesi quadre, come '[percorso/del/file.py]' o '[shell-command]'. NESSUN ALTRO CARATTERE è permesso tra '- [ ]' e il marcatore.\n"
+        f"1. Il piano DEVE contenere una lista di sotto-task.\n"
+        f"2. OGNI SINGOLO SOTTO-TASK DEVE iniziare con '- [ ]' seguito IMMEDIATAMENTE da un marcatore tra parentesi quadre, come '[percorso/del/file.py]' o '[shell-command]'.\n"
         f"3. Per ogni file di codice sorgente, DEVI includere un task successivo per un file di test corrispondente (es. `[tests/bots/test_mio_file.py]`).\n"
         f"4. Il comando in un task '[shell-command]' DEVE essere puro, senza virgolette inverse (backticks)."
     )
@@ -77,7 +63,7 @@ def run_project_bot(task_details, task_index, phase_index):
     piano_generato = generate_response(gemini_model, prompt)
     
     if not piano_generato or not is_plan_valid(piano_generato):
-        logging.error("Fallimento nella generazione del piano: l'output dell'IA è vuoto o non supera il controllo di validità.")
+        logging.error("Fallimento nella generazione del piano: l'output dell'IA è vuoto o non valido.")
         update_business_plan_status(task_index, phase_index, "planning_failed")
         return
 

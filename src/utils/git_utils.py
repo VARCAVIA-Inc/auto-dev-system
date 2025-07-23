@@ -14,9 +14,11 @@ def commit_and_push_changes(repo_path, commit_message, branch_name):
     logging.info(f"Push delle modifiche al branch '{branch_name}'...")
     try:
         repo = Repo(repo_path)
-        repo.git.add(all=True)
+        
+        # Aggiunge tutti i file modificati e nuovi
+        repo.git.add(A=True)
 
-        if not repo.index.diff("HEAD"):
+        if not repo.is_dirty(untracked_files=True):
             logging.warning("Nessuna modifica da committare.")
             return True
 

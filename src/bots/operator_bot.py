@@ -7,7 +7,6 @@ from src.utils.logging_utils import setup_logging
 from src.utils.ai_utils import get_gemini_model, generate_response, EXECUTION_MODEL
 
 def run_tests():
-    # ... (Codice invariato, lo ometto per brevità ma va lasciato nel file)
     logging.info("Esecuzione dei test con pytest...")
     try:
         result = subprocess.run(['pytest'], capture_output=True, text=True)
@@ -25,7 +24,6 @@ def run_tests():
         return False
 
 def create_pull_request(branch_name):
-    # ... (Codice invariato, lo ometto per brevità ma va lasciato nel file)
     try:
         logging.info(f"Creazione della Pull Request per il branch '{branch_name}'...")
         env = os.environ.copy()
@@ -76,11 +74,9 @@ def main():
         else:
             file_path = task_type
             logging.info(f"Generazione contenuto per il file: {file_path}")
-            
             model = get_gemini_model(EXECUTION_MODEL)
             generated_content = generate_response(model, f"Scrivi il codice/contenuto per questo task: '{action_description}'. Fornisci solo il codice puro, senza spiegazioni o markdown.")
-            if not generated_content: raise Exception("Generazione del contenuto AI fallita.")
-            
+            if generated_content is None: raise Exception("Generazione del contenuto AI fallita.")
             full_path = os.path.join(repo_path, file_path)
             os.makedirs(os.path.dirname(full_path), exist_ok=True)
             with open(full_path, 'w') as f: f.write(generated_content)
@@ -90,19 +86,14 @@ def main():
             raise Exception("I test unitari sono falliti. Annullamento della Pull Request.")
 
         repo.git.add(all=True)
-        if not repo.index.diff("HEAD") and not repo.untracked_files:
+        if not repo.is_dirty(untracked_files=True):
             logging.warning("Nessuna modifica rilevata. Task completato senza PR."); return
             
         repo.git.commit('-m', commit_message)
         logging.info(f"Commit creato: '{commit_message}'")
         
         remote_url = f"https://x-access-token:{os.getenv('GITHUB_TOKEN')}@github.com/{os.getenv('GITHUB_REPOSITORY')}.git"
-        
-        # --- CORREZIONE CHIAVE ---
-        # Usiamo un metodo di push più diretto che rispecchia il comando da terminale
-        repo.git.push(remote_url, f'{branch_name}:{branch_name}', '--force')
-        # -------------------------
-
+        repo.git.push(remote_url, f'HEAD:{branch_name}', '--force')
         logging.info(f"Push del branch '{branch_name}' completato.")
         
         create_pull_request(branch_name)

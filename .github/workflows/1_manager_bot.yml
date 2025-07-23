@@ -3,6 +3,8 @@ name: 1. Manager Bot Orchestration
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - 'README.md'
   workflow_dispatch:
   schedule:
     - cron: '*/15 * * * *'
@@ -34,4 +36,5 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
         run: |
           pip install -r requirements.txt
+          gh auth setup-git
           python src/bots/manager_bot.py
