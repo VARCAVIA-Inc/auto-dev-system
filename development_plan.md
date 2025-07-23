@@ -39,7 +39,7 @@ Esegui i seguenti sotto-task in ordine.
     - [x] `[src/bots/manager_bot.py]`
     - [x] `[tests/bots/test_manager_bot.py]` Scrivi test per verificare la logica del ManagerBot.
     - [x] `[src/bots/operator_bot.py]`
-    - [ ] `[tests/bots/test_operator_bot.py]` Scrivi test per le funzionalità principali dell'OperatorBot. Questo test verrà aggiornato nella fase successiva.
+    - [x] `[tests/bots/test_operator_bot.py]` Scrivi test per le funzionalità principali dell'OperatorBot. Questo test verrà aggiornato nella fase successiva.
     - [ ] `[src/bots/project_bot.py]`
     - [ ] `[tests/bots/test_project_bot.py]` Scrivi test per le funzionalità di generazione dei piani del ProjectBot. Anche questo verrà aggiornato.
     - [ ] `[src/utils/ai_utils.py]`
