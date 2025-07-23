@@ -20,7 +20,7 @@ Esegui i seguenti sotto-task in ordine.
 - [x] Crea la struttura delle directory per i test, che dovrà rispecchiare la struttura di `src`.
     - [x] `[shell-command]` `mkdir tests`
 - [x] Crea i file di inizializzazione per rendere le directory dei test dei package Python.
-    - [ ] `[tests/__init__.py]`
+    - [x] `[tests/__init__.py]`
 - [ ] Configura `pytest` per riconoscere automaticamente la directory dei test.
     - [ ] `[pytest.ini]` Crea questo file nella root del progetto con il seguente contenuto:
       ```ini
