@@ -10,8 +10,8 @@ def is_plan_valid(plan_text: str) -> bool:
     """Controlla se un piano di sviluppo generato è valido e usa il nuovo formato di stato."""
     logging.info("Validazione del piano di sviluppo generato...")
     has_tasks = False
-    # Regex per validare il formato: '- [ ] [STATO] [target] descrizione'
-    task_regex = re.compile(r'^\s*-\s*\[\s*\]\s*\[(PENDING|SHELL|TEST)\]\s*\[(.*?)\]\s*.*')
+    # Regex CORRETTA per validare il formato: '- [ ] [STATO] [target] descrizione'
+    task_regex = re.compile(r'^\s*-\s*\[\s*\]\s*\[(PENDING|shell-command)\]\s*\[(.*?)\]\s*.*')
     
     for line in plan_text.splitlines():
         line = line.strip()
