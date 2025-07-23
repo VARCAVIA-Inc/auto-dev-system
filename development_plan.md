@@ -10,5 +10,5 @@ Ecco la lista dei task per raggiungere questo obiettivo:
 - [x] [tests/__init__.py] Crea un file vuoto per contrassegnare la directory `tests` come un pacchetto Python.
 - [x] [tests/test_hello.py] Crea un file di test che importa la funzione `get_greeting` da `src.hello`. Aggiungi un test `test_get_greeting` che verifica che la funzione restituisca correttamente la stringa "Hello World!".
 - [x] [requirements.txt] Assicurati che `pytest` sia presente nel file. Se non c'è, aggiungilo.
-- [ ] [shell-command] python3 -m pytest tests/test_hello.py
+- [x] [shell-command] python3 -m pytest tests/test_hello.py
 ```
