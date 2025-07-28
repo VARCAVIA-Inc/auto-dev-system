@@ -1,22 +1,29 @@
-# VARCAVIA Office - Autonomous Development System (MVP)
+# VARCAVIA Office - Organismo Digitale Autonomo
 
-Questo repository contiene l'infrastruttura per **VARCAVIA Office**, un sistema di sviluppo software autonomo. Partendo da un obiettivo di business definito in `src/business_plan.yaml`, l'organizzazione di bot collabora per pianificare, sviluppare, testare e integrare il codice necessario per raggiungere l'obiettivo.
+Questo repository contiene il codice sorgente e l'infrastruttura per **VARCAVIA Office**, un organismo digitale autonomo progettato per eseguire missioni di business complesse con intelligenza, efficienza e capacità di auto-miglioramento.
 
-## Architettura
+## Visione
 
-Il sistema è un'organizzazione di agenti IA specializzati:
+[cite_start]Creare la prima piattaforma al mondo di organismi digitali autonomi, capaci di eseguire missioni di business complesse con un'intelligenza e un'efficienza sovrumane. [cite: 194]
 
--   **ManagerBot**: Il CEO. Orchestra il flusso di lavoro, delega i task e gestisce le Pull Request.
--   **ProjectBot**: Il CTO. Traduce gli obiettivi di business in piani tecnici dettagliati (`development_plan.md`).
--   **OperatorBot**: Lo Sviluppatore. Esegue i task tecnici, scrive codice e test, e apre le Pull Request.
--   **AuditBot**: Il Supervisore QA. Monitora lo stato del sistema e invia report.
+## Architettura di Riferimento
 
-## Setup e Attivazione
+Il sistema è progettato come un'architettura di microservizi event-driven, orchestrata su Kubernetes.
 
-1.  **Progetto Google Cloud**: Un progetto con billing attivo e l'API Vertex AI (`aiplatform.googleapis.com`) abilitata.
-2.  **Autenticazione**: Configurare Workload Identity Federation tra il repository GitHub e un Service Account GCP con il ruolo "Vertex AI User".
-3.  **Segreti di GitHub**: In `Settings > Secrets and variables > Actions`, creare i seguenti segreti:
-    * `BOT_GITHUB_TOKEN`: Un [Fine-grained personal access token](https://github.com/settings/tokens?type=beta) con permessi di lettura/scrittura su `Contents` e `Pull Requests`.
-    * `EMAIL_*`: Le credenziali per le notifiche email (`EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USERNAME`, `EMAIL_PASSWORD`, `SENDER_EMAIL`, `RECEIVER_EMAIL`).
-4.  **Missione**: Definire un task con `status: pending` nel file `src/business_plan.yaml`.
-5.  **Attivazione**: Un `push` sul branch `main` attiverà il `ManagerBot` e darà inizio al ciclo.
+* [cite_start]**Livello di Orchestrazione:** Kubernetes (GKE) [cite: 206]
+* [cite_start]**Livello di Comunicazione:** Apache Kafka come spina dorsale asincrona [cite: 207]
+* [cite_start]**Livello di Rete e Sicurezza:** Istio service mesh con policy mTLS STRICT [cite: 208]
+* [cite_start]**Livello di Intelligenza:** Google Gemini 1.5 Pro e modelli di sicurezza dedicati [cite: 209, 210]
+* [cite_start]**Livello Dati:** Neo4j (memoria a lungo termine) e Redis (stato volatile) [cite: 212, 211]
+* **Stack di Sviluppo:** I servizi core sono sviluppati in **Go**.
+
+## Servizi Chiave
+
+* **ceo_service:** Il cervello strategico, traduce la missione in obiettivi.
+* **architect_service:** Il progettista tattico, crea piani tecnici (blueprint).
+* **worker_pool:** Il braccio esecutivo, esegue i task atomici.
+* **auditor_service:** La coscienza etica e di sicurezza.
+* **knowledge_graph_populator:** Popola la memoria a lungo termine.
+* **cost_optimizer_service:** Gestisce proattivamente i costi cloud.
+
+Questo progetto è gestito seguendo il piano esecutivo dettagliato "VARCAVIA Office - PIANO 4.0".

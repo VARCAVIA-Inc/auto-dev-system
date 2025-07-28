@@ -1,0 +1,24 @@
+name: DNA Validation
+on:
+  pull_request:
+    paths:
+      - 'dna/**'
+      - 'schemas/dna_schema.json'
+
+jobs:
+  validate-dna-files:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install AJV JSON Schema Validator
+        run: npm install -g ajv-cli ajv-formats
+
+      - name: Validate business_mission.yaml
+        run: ajv validate -s schemas/dna_schema.json -d dna/business_mission.yaml --all-errors

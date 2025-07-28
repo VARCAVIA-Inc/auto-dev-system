@@ -1,0 +1,13 @@
+    # schemas/buf.yaml
+    # Definisce la root del nostro modulo Protobuf e le sue dipendenze.
+    version: v1
+    name: buf.build/varcavia/sentient-organism
+    deps:
+      - buf.build/googleapis/googleapis
+    breaking:
+      use:
+        - FILE
+    lint:
+      use:
+        - DEFAULT
+    

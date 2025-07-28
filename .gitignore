@@ -1,39 +1,24 @@
-# Python
-__pycache__/
-*.py[codz]
-*.so
-.Python
-build/
-dist/
-eggs/
-.eggs/
-lib/
-lib64/
-*.egg-info/
-.installed.cfg
-*.egg
+# File binari e di output compilati
+# Includiamo il nome specifico del nostro servizio, ma potremmo usare un pattern
+/services/state_aggregator/state_aggregator
+*.exe
+*.out
 
-# Environments
-.env
-.venv
-env/
-venv/
+# Cartelle di build e dipendenze (se usate)
+/build/
+/vendor/
 
-# Test & Coverage
-htmlcov/
-.tox/
-.coverage
-.cache
-.pytest_cache/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# Credenziali e Log
+# File di log
 *.log
-secrets.yaml
-gha-creds-*.json
-sa-key.json
 
-# VS Code
+# File di configurazione dell'ambiente locale
+# MAI fare il commit di file .env che contengono segreti!
+.env*
+
+# Cartelle di configurazione degli editor e IDE
 .vscode/
+.idea/
+
+# File di sistema operativo
+.DS_Store
+Thumbs.db

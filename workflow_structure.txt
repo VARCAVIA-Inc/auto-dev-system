@@ -1,0 +1,177 @@
+.github/workflows/1_manager_bot.yml (name: 1. Manager Bot Orchestration
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/business_plan.yaml'
+  
+  workflow_dispatch:
+
+  workflow_run:
+    workflows: ["4. PR Validation"]
+    types:
+      - completed
+
+jobs:
+  run_manager_bot:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write 
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with: { token: '${{ secrets.BOT_GITHUB_TOKEN }}' }
+      
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: 'projects/826570341026/locations/global/workloadIdentityPools/varcavia-github-pool/providers/varcavia-github-provider'
+          service_account: 'vertex-client@varcavia-office-bc6xvv.iam.gserviceaccount.com'
+
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.9' }
+
+      - name: Install Dependencies & Run
+        env:
+          GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
+          GCP_PROJECT: 'varcavia-office-bc6xvv'
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          pip install -r requirements.txt
+          gh auth setup-git
+          python src/bots/manager_bot.py)
+.github/workflows/4_validation.yml (name: 4. PR Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  validate-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v4
+
+      - name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: 'projects/826570341026/locations/global/workloadIdentityPools/varcavia-github-pool/providers/varcavia-github-provider'
+          service_account: 'vertex-client@varcavia-office-bc6xvv.iam.gserviceaccount.com'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with: { python-version: '3.9' }
+
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+      
+      - name: Add CI Status Label
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr edit $PR_NUMBER --add-label "status: ci-in-progress"
+
+      - name: Run Unit Tests
+        id: tests
+        run: pytest
+
+      - name: Update PR Status Based on Tests
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        if: always()
+        run: |
+          gh pr edit $PR_NUMBER --remove-label "status: ci-in-progress"
+          if [[ ${{ steps.tests.outcome }} == 'success' ]]; then
+            gh pr edit $PR_NUMBER --add-label "ci: passed"
+          else
+            gh pr edit $PR_NUMBER --add-label "ci: failed"
+            exit 1
+          fi)
+.github/workflows/2_operator_bot.yml (name: 2. Operator Bot Task Execution
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch_name: { required: true }
+      task_description: { required: true }
+      task_line_index: { required: true }
+
+jobs:
+  execute_task:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with: { token: '${{ secrets.BOT_GITHUB_TOKEN }}' }
+
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: 'projects/826570341026/locations/global/workloadIdentityPools/varcavia-github-pool/providers/varcavia-github-provider'
+          service_account: 'vertex-client@varcavia-office-bc6xvv.iam.gserviceaccount.com'
+
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.9' }
+
+      - name: Install Dependencies & Run
+        env:
+          BRANCH_NAME: ${{ github.event.inputs.branch_name }}
+          TASK_DESCRIPTION: ${{ github.event.inputs.task_description }}
+          TASK_LINE_INDEX: ${{ github.event.inputs.task_line_index }}
+          GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
+          GCP_PROJECT: 'varcavia-office-bc6xvv'
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          pip install -r requirements.txt
+          gh auth setup-git
+          python src/bots/operator_bot.py)
+.github/workflows/3_audit_bot.yml (name: 3. Audit Bot Supervision
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *' # Ogni notte alle 3
+
+jobs:
+  run_audit_bot:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read 
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: 'projects/826570341026/locations/global/workloadIdentityPools/varcavia-github-pool/providers/varcavia-github-provider'
+          service_account: 'vertex-client@varcavia-office-bc6xvv.iam.gserviceaccount.com'
+
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.9' }
+
+      - name: Install Dependencies & Run
+        env:
+          GCP_PROJECT: 'varcavia-office-bc6xvv'
+          PYTHONPATH: ${{ github.workspace }}
+          EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
+          EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
+          EMAIL_USERNAME: ${{ secrets.EMAIL_USERNAME }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          RECEIVER_EMAIL: ${{ secrets.RECEIVER_EMAIL }}
+        run: |
+          pip install -r requirements.txt
+          gh auth setup-git
+          python src/bots/audit_bot.py)

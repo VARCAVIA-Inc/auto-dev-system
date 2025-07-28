@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: state-aggregator-service
+spec:
+  # Il tipo ClusterIP espone il servizio solo all'interno del cluster.
+  type: ClusterIP
+  selector:
+    # Seleziona i pod che hanno l'etichetta 'app: state-aggregator'
+    app: state-aggregator
+  ports:
+    - protocol: TCP
+      port: 50051 # La porta su cui il servizio è esposto
+      targetPort: 50051 # La porta del container a cui inoltrare il traffico
