@@ -1,4 +1,4 @@
-name: Go CI - Build, Lint & Test
+name: Go CI – Build, Lint & Test
 
 on:
   push:
@@ -25,32 +25,31 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           cache: true
 
-      # ---------- QUI il fix: action corretta ----------
-      - name: Set up Buf
-        uses: bufbuild/buf-setup-action@v1
-        with:
-          version: 1.30.0
+      # ---------- buf + protoc plugins ----------
+      - name: Install buf & protoc plugins
+        run: |
+          curl -sSL https://github.com/bufbuild/buf/releases/download/v1.30.0/buf-Linux-x86_64 \
+            -o /usr/local/bin/buf && chmod +x /usr/local/bin/buf
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.34.0
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.4.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
-      - name: Install Go dependencies
-        run: go mod download
-
-      - name: Generate Protobuf code
-        run: make proto
+      - name: Generate protobuf
+        run: |
+          cd schemas
+          buf mod update                   # risolve warning deps
+          buf generate
+          cd ..
 
       - name: Lint & Vet
         run: make lint
 
-      - name: Run tests (se presenti)
+      - name: Unit tests
         run: go test ./...
-
-      - name: Build Docker image (local only)
-        run: make build
