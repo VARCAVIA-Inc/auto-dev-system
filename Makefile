@@ -1,85 +1,77 @@
 # ==============================================================================
 # Makefile Unificato e Potenziato per il progetto VARCAVIA Office
-#
-# Questo file centralizza tutti i comandi comuni per lo sviluppo e il deployment,
-# combinando la qualità del codice Go con il ciclo di vita completo per
-# Protobuf, Docker e Kubernetes.
 # ==============================================================================
 
 # ----------------- Variabili di Configurazione -----------------
-# Modifica questi valori per i futuri servizi.
 IMAGE_NAME := varcavia/state-aggregator
 IMAGE_TAG  := v0.1.0
 
-
 # ----------------- Qualità del Codice & Dipendenze -----------------
 
-## lint: Formatta e controlla la qualità del codice Go (go fmt, go vet).
+## lint: formatta e controlla la qualità del codice Go
 .PHONY: lint
 lint:
 	@echo ">> Linting Go files..."
-	@go fmt ./...
-	@go vet ./...
+	go fmt ./...
+	go vet ./...
 
-## tidy: Pulisce e sistema le dipendenze del modulo Go.
+## tidy: pulisce e sistema le dipendenze del modulo Go
 .PHONY: tidy
 tidy:
 	@echo ">> Tidying Go module dependencies..."
-	@go mod tidy
-
+	go mod tidy
 
 # ----------------- Generazione Codice Protobuf -----------------
 
-## proto: Genera il codice Go dagli schemi Protobuf utilizzando buf.
+## proto: genera il codice Go dagli schemi Protobuf
 .PHONY: proto
 proto:
 	@echo ">> Generating Protobuf Go code..."
-	@cd schemas && buf generate && cd ..
-	@echo "✅ Protobuf code generated successfully."
+	cd schemas && buf generate && cd ..
+	@echo "✅ Proto OK"
 
+# ----------------- Test -----------------
+
+## test: vet + unit test (dipende da proto per avere i .pb.go aggiornati)
+.PHONY: test
+test: proto
+	go vet ./...
+	go test ./...
 
 # ----------------- Ciclo di Vita Docker -----------------
 
-## build: Costruisce l'immagine Docker per il state_aggregator_service.
+## build: costruisce l'immagine Docker
+# dipende da proto per garantire che il codice generato sia aggiornato
 .PHONY: build
-build:
+build: proto
 	@echo ">> Building Docker image: $(IMAGE_NAME):$(IMAGE_TAG)..."
-	@docker build -t $(IMAGE_NAME):$(IMAGE_TAG) -f services/state_aggregator/Dockerfile .
-	@echo "✅ Docker image built successfully."
-
+	docker build -t $(IMAGE_NAME):$(IMAGE_TAG) -f services/state_aggregator/Dockerfile .
+	@echo "✅ Image OK"
 
 # ----------------- Ciclo di Vita Kubernetes -----------------
 
-## deploy: Applica i manifest Kubernetes per il state_aggregator.
+## deploy: applica i manifest Kubernetes per il servizio
 .PHONY: deploy
 deploy:
 	@echo ">> Deploying state_aggregator to Kubernetes..."
-	@kubectl apply -f k8s/state-aggregator-service.yaml
-	@kubectl apply -f k8s/state-aggregator-deployment.yaml
-	@echo "✅ Service deployed. Run 'kubectl get pods' to check status."
+	kubectl apply -f k8s/state-aggregator-service.yaml
+	kubectl apply -f k8s/state-aggregator-deployment.yaml
+	@echo "✅ Deployed. Run 'kubectl get pods' to check status."
 
-## undeploy: Rimuove le risorse del state_aggregator da Kubernetes.
+## undeploy: rimuove le risorse Kubernetes del servizio
 .PHONY: undeploy
 undeploy:
 	@echo ">> Removing state_aggregator from Kubernetes..."
-	@kubectl delete -f k8s/state-aggregator-deployment.yaml --ignore-not-found=true
-	@kubectl delete -f k8s/state-aggregator-service.yaml --ignore-not-found=true
+	kubectl delete -f k8s/state-aggregator-deployment.yaml --ignore-not-found=true
+	kubectl delete -f k8s/state-aggregator-service.yaml --ignore-not-found=true
 	@echo "✅ Service undeployed."
 
-## k8s-dna-configmap: Crea il ConfigMap 'varcavia-dna' dai file nella cartella /dna.
-.PHONY: k8s-dna-configmap
-k8s-dna-configmap:
-	@echo ">> Creating/Updating 'varcavia-dna' ConfigMap..."
-	@kubectl create configmap varcavia-dna --from-file=./dna -o yaml --dry-run=client | kubectl apply -f -
-	@echo "✅ ConfigMap 'varcavia-dna' applied."
-	
 # ----------------- Aiuto -----------------
 
-## help: Mostra questo messaggio di aiuto auto-documentante.
+## help: mostra questo messaggio di aiuto
 .PHONY: help
 help:
 	@echo "Usage: make <target>"
 	@echo ""
 	@echo "Available targets:"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
-
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-18s\033[0m %s\n", $$1, $$2}'

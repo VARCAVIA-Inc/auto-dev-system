@@ -1,0 +1,63 @@
+name: Go CI - Build, Lint & Test
+
+on:
+  push:
+    branches: [ "main" ]
+    # La chiave 'paths' deve essere figlia dell'evento trigger
+    paths:
+      - 'services/**'
+      - 'schemas/**'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Makefile'
+      - '.github/workflows/ci-go.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'services/**'
+      - 'schemas/**'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Makefile'
+      - '.github/workflows/ci-go.yml'
+  
+  # Permette di avviare il workflow manualmente dalla UI di GitHub
+  workflow_dispatch:
+
+jobs:
+  # Abbiamo unificato i job per semplicità ed efficienza
+  build-and-test:
+    name: Build, Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          # Best practice: legge la versione di Go direttamente dal file go.mod
+          go-version-file: 'go.mod'
+          # Abilita il caching delle dipendenze Go per velocizzare le esecuzioni future
+          cache: true
+
+      - name: Set up Buf for Protobuf
+        uses: bufbuild/setup-buf@v1
+
+      - name: Install Go Dependencies
+        run: go mod download
+
+      - name: Generate Protobuf code
+        run: make proto
+
+      - name: Run Linters and Vet
+        run: make lint
+
+      - name: Run Tests (se presenti)
+        # 'go test' esce con codice 0 se non ci sono test, quindi è sicuro da eseguire
+        run: go test ./...
+
+      - name: Build Docker image
+        # Questo passo verifica che il Dockerfile sia corretto e che la build funzioni,
+        # senza però pushare l'immagine a un registry.
+        run: make build

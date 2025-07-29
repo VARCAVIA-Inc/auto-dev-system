@@ -1,85 +1,23 @@
 # Struttura del Progetto e Contenuto dei File
-/
+./
 build/
-build/package/
+  package/
 schemas/
-schemas/v1/
-schemas/services/
-schemas/services/gen/
-schemas/services/gen/go/
-schemas/services/gen/go/services/
-schemas/services/gen/go/services/gen/
-schemas/services/gen/go/services/gen/go/
-schemas/services/gen/go/services/gen/go/state_aggregator/
-schemas/services/gen/go/services/gen/go/state_aggregator/v1/
+  v1/
 services/
-services/state_aggregator/
-services/internal/
-services/internal/config/
+  state_aggregator/
+  gen/
+    go/
+      services/
+        gen/
+          go/
+            state_aggregator/
+              v1/
+  internal/
+    config/
 scripts/
 k8s/
 manifests/
-manifests/base/
+  base/
 dna/
-./Makefile
-  
-
-./schemas/v1/state_aggregator.proto
-  
-
-./schemas/services/gen/go/services/gen/go/state_aggregator/v1/state_aggregator_grpc.pb.go
-  
-
-./schemas/services/gen/go/services/gen/go/state_aggregator/v1/state_aggregator.pb.go
-  
-
-./schemas/buf.yaml
-  
-
-./schemas/dna_schema.json
-  
-
-./schemas/buf.gen.yaml
-  
-
-./README.md
-  
-
-./go.mod
-  
-
-./go.sum
-  
-
-./services/state_aggregator/main.go
-  
-
-./services/internal/config/dna_loader.go
-  
-
-./scripts/vertex_check.sh
-  
-
-./PROJECT_BRIEF.md
-  
-
-./k8s/state-aggregator-service.yaml
-  
-
-./k8s/state-aggregator-deployment.yaml
-  
-
-./dna/business_mission.yaml
-  
-
-./workflow_structure.txt
-  
-
-./LICENSE
-  
-
-./project_structure.txt
-  
-
-
 # Fine della struttura

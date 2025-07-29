@@ -1,9 +1,8 @@
-# schemas/buf.gen.yaml
 version: v1
 plugins:
   - plugin: go
-    # Percorso corretto: esci dalla cartella /schemas e vai in /services/gen/go
-    out: ../services/gen/go
+    opt: paths=source_relative
+    out: ../services/gen/go                # <— questo è il punto chiave
   - plugin: go-grpc
-    # Percorso corretto: esci dalla cartella /schemas e vai in /services/gen/go
+    opt: paths=source_relative
     out: ../services/gen/go
