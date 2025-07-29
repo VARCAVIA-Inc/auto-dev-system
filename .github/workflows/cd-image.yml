@@ -22,7 +22,7 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Install buf & plugins
+      - name: Install buf & protoc plugins
         run: |
           curl -sSL https://github.com/bufbuild/buf/releases/download/v1.30.0/buf-Linux-x86_64 -o /usr/local/bin/buf
           chmod +x /usr/local/bin/buf
@@ -50,6 +50,13 @@ jobs:
           file: services/state_aggregator/Dockerfile
           push: false
           tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      # ---------- Install grpcurl ----------
+      - name: Install grpcurl
+        run: |
+          GRPCURL_VERSION=1.9.3
+          curl -sSL "https://github.com/fullstorydev/grpcurl/releases/download/v${GRPCURL_VERSION}/grpcurl_${GRPCURL_VERSION}_linux_x86_64.tar.gz" \
+          | tar -xz -C /usr/local/bin grpcurl
 
       # ---------- Integration test ----------
       - name: Integration test via compose
