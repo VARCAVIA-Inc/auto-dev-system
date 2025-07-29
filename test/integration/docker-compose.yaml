@@ -1,17 +1,17 @@
+version: "3.8"
+
 services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - 6379:6379
 
   state_aggregator:
-    # costruiamo l’immagine al volo partendo dalla root del repo
-    build:
-      context: ../..                         # <- rispetto a test/integration
-      dockerfile: services/state_aggregator/Dockerfile
+    # L’immagine è già stata costruita nello step precedente del workflow
+    image: "${IMAGE_NAME}:${GITHUB_SHA}"
     environment:
       - REDIS_ADDR=redis:6379
     depends_on:
       - redis
     ports:
-      - "50051:50051"
+      - 50051:50051
