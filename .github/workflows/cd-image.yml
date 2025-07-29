@@ -2,44 +2,39 @@ name: Docker Build & Push
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
   pull_request: {}
 
+# repo/path sempre lowercase
 env:
-  IMAGE_NAME: ghcr.io/${{ github.repository }}  # ghcr.io/<owner>/<repo>
+  IMAGE_NAME: ghcr.io/${{ github.repository }}   # ex: ghcr.io/varcavia-inc/auto-dev-system
 
 jobs:
   build-test-push:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
 
-      # ---------- Buf & protoc plugins ----------
-      - name: Install buf & protoc-gen
+      - name: Install buf & tools
         run: |
-          curl -sSL https://github.com/bufbuild/buf/releases/download/v1.30.0/buf-Linux-x86_64 \
-            -o /usr/local/bin/buf && chmod +x /usr/local/bin/buf
+          curl -sSL https://github.com/bufbuild/buf/releases/download/v1.30.0/buf-Linux-x86_64 -o /usr/local/bin/buf
+          chmod +x /usr/local/bin/buf
           go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.34.0
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.4.0
 
       - name: Generate protobuf
         run: cd schemas && buf generate && cd ..
 
-      # ---------- Unit test ----------
       - name: Unit tests
         run: |
           go vet ./...
           go test ./...
 
-      # ---------- Build image (cache layer) ----------
-      - name: Build image for integration test
+      - name: Build image (cache)
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -47,15 +42,14 @@ jobs:
           push: false
           tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-      # ---------- Integration test ----------
-      - name: Integration test via docker‑compose
+      - name: Integration test
         run: |
           cd test/integration
           docker compose up -d
           ./smoke.sh
           docker compose down -t 0
 
-      # ---------- Push (main branch only) ----------
+      # ---------- Push su GHCR solo su main ----------
       - name: Login to GHCR
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/login-action@v3
@@ -64,7 +58,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      - name: Push image to GHCR
+      - name: Push image
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v5
         with:
