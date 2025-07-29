@@ -1,16 +1,17 @@
-version: "3.8"
 services:
   redis:
     image: redis:7-alpine
-    ports: ["6379:6379"]
+    ports:
+      - "6379:6379"
 
   state_aggregator:
-    image: varcavia/state-aggregator:${GITHUB_SHA}
+    # costruiamo l’immagine al volo partendo dalla root del repo
     build:
-      context: .
+      context: ../..                         # <- rispetto a test/integration
       dockerfile: services/state_aggregator/Dockerfile
     environment:
       - REDIS_ADDR=redis:6379
     depends_on:
       - redis
-    ports: ["50051:50051"]
+    ports:
+      - "50051:50051"
