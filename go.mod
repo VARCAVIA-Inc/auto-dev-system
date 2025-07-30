@@ -5,7 +5,9 @@ go 1.24.5
 require (
 	github.com/redis/go-redis/v9 v9.11.0
 	google.golang.org/grpc v1.64.0
-	google.golang.org/protobuf v1.33.0
+	google.golang.org/prot
+	github.com/confluentinc/confluent-kafka-go/v2 v2.5.0
+	gopkg.in/yaml.v3 v3.0.1obuf v1.33.0
 )
 
 require (
