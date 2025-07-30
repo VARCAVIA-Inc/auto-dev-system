@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package varcavia.audit.v1;
+
+option go_package = "services/gen/go/audit/v1;auditv1";
+
+import "core/objective.proto";
+
+service Auditor {
+  rpc ValidateObjective (ValidateObjectiveRequest) returns (ValidateObjectiveResponse);
+}
+
+message ValidateObjectiveRequest {
+  varcavia.core.v1.Objective objective = 1;
+}
+
+message ValidateObjectiveResponse {
+  bool allowed = 1;
+  string reason = 2;
+}
