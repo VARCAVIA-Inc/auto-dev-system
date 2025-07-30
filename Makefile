@@ -28,6 +28,7 @@ tidy:
 proto:
 	@echo ">> Generating Protobuf Go code..."
 	cd schemas && buf generate && cd ..
+	cd protos && buf generate && cd ..
 	@echo "✅ Proto OK"
 
 # ----------------- Test -----------------
