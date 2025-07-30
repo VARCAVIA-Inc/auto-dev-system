@@ -1,0 +1,10 @@
+syntax = "proto3";
+package varcavia.core.v1;
+
+option go_package = "services/gen/go/core/v1;corev1";
+
+// Objective represents a high-level goal produced by the ceo_service
+message Objective {
+  string id = 1;
+  string description = 2;
+}
