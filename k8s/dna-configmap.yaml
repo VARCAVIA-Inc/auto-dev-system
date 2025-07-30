@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: varcavia-dna
+  labels:
+    app: varcavia-office
+    component: dna
+data:
+  # File YAML contenente la missione di business. Questo ConfigMap viene montato dai servizi
+  # interessati (es. ceo_service, architect_service) per leggere il DNA primordiale.
+  business_mission.yaml: |
+    missionID: "MISSION-2025-Q3-001"
+    version: "1.0.0"
+    marketContext:
+      targetMarketSegment: "PMI nel settore e-commerce e SaaS B2B"
+      competitiveAdvantage: "Offrire intelligenza strategica autonoma as-a-service, non semplice automazione"
+    description: "Validare il primo ciclo vitale autonomo (MVP) del sistema VARCAVIA Office, eseguendo un task semplice dall'inizio alla fine per dimostrare la funzionalità della catena ceo_service -> architect_service -> worker_pool."
+    kpis:
+      - name: "End-to-End Task Success Rate"
+        target: "100%"
+        query: "COUNT(tasks_successful) / COUNT(tasks_created)"
+      - name: "Cycle Time"
+        target: "< 10 minutes"
+        query: "AVG(task_completion_timestamp - task_creation_timestamp)"
+    constraints:
+      budget:
+        monthlyAmountEUR: 2300
+        currency: "EUR"

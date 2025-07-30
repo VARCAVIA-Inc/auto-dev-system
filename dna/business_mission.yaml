@@ -1,9 +1,17 @@
 missionID: "MISSION-2025-Q3-001"
 version: "1.0.0"
+
+# Contesto di mercato per la missione. Questa sezione descrive il segmento di mercato e il vantaggio competitivo
+# che VARCAVIA Office mira a perseguire nella fase iniziale di sviluppo.
 marketContext:
-  [cite_start]targetMarketSegment: "PMI nel settore e-commerce e SaaS B2B [cite: 196]"
-  [cite_start]competitiveAdvantage: "Offrire intelligenza strategica autonoma as-a-service, non semplice automazione [cite: 198]"
-[cite_start]description: "Validare il primo ciclo vitale autonomo (MVP) del sistema VARCAVIA Office, eseguendo un task semplice dall'inizio alla fine per dimostrare la funzionalità della catena ceo_service -> architect_service -> worker_pool[cite: 220]."
+  targetMarketSegment: "PMI nel settore e-commerce e SaaS B2B"
+  competitiveAdvantage: "Offrire intelligenza strategica autonoma as-a-service, non semplice automazione"
+
+# Breve descrizione dello scopo della missione per l'MVP. Deve essere sufficientemente
+# chiara da guidare il ceo_service nella generazione di obiettivi tattici.
+description: "Validare il primo ciclo vitale autonomo (MVP) del sistema VARCAVIA Office, eseguendo un task semplice dall'inizio alla fine per dimostrare la funzionalità della catena ceo_service -> architect_service -> worker_pool."
+
+# Elenco dei principali KPI di riferimento per valutare il successo del MVP.
 kpis:
   - name: "End-to-End Task Success Rate"
     target: "100%"
@@ -11,7 +19,10 @@ kpis:
   - name: "Cycle Time"
     target: "< 10 minutes"
     query: "AVG(task_completion_timestamp - task_creation_timestamp)"
+
+# Vincoli della missione. In particolare qui viene definito il budget massimo mensile in EUR
+# da rispettare durante la fase di sviluppo dell'MVP.
 constraints:
   budget:
-    [cite_start]monthlyAmountEUR: 2300 # Budget per la Fase 1 [cite: 227]
+    monthlyAmountEUR: 2300
     currency: "EUR"
