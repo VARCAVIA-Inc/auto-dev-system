@@ -1,11 +1,13 @@
-// /schemas/v1/state_aggregator.proto
+// /schemas/state_aggregator/v1/state_aggregator.proto
 syntax = "proto3";
 
 // Il package definisce un namespace per evitare collisioni e organizza gli schemi.
 package varcavia.state_aggregator.v1;
 
 // Opzione specifica per Go: indica al compilatore dove posizionare il codice generato.
-// ===> LA RIGA FONDAMENTALE DA CORREGGERE È QUESTA:
+// Il path fa riferimento al modulo Go principale (varcavia.com/sentient-organism) seguito
+// dalla directory di output definita in buf.gen.yaml.  Il suffisso dopo il punto e virgola
+// specifica il nome del pacchetto Go generato.
 option go_package = "varcavia.com/sentient-organism/services/gen/go/state_aggregator/v1;state_aggregator_v1";
 
 import "google/protobuf/timestamp.proto";
@@ -13,19 +15,19 @@ import "google/protobuf/timestamp.proto";
 // Enum per definire un set controllato di stati possibili per un task.
 enum Status {
   STATUS_UNSPECIFIED = 0;
-  PENDING = 1;
-  IN_PROGRESS = 2;
-  COMPLETED_SUCCESS = 3;
-  COMPLETED_FAILURE = 4;
+  PENDING            = 1;
+  IN_PROGRESS        = 2;
+  COMPLETED_SUCCESS  = 3;
+  COMPLETED_FAILURE  = 4;
 }
 
 // TaskState rappresenta la fotografia dello stato di un singolo task in un dato momento.
 message TaskState {
-  string task_id = 1;
-  Status status = 2;
-  string worker_id = 3;
+  string task_id                = 1;
+  Status status                 = 2;
+  string worker_id              = 3;
   google.protobuf.Timestamp last_update = 4;
-  string details = 5;
+  string details                = 5;
 }
 
 // Definisce il servizio gRPC StateAggregator e i suoi metodi (RPCs).
@@ -40,7 +42,7 @@ message SetTaskStateRequest {
 }
 
 message SetTaskStateResponse {
-  bool success = 1;
+  bool   success = 1;
   string task_id = 2;
 }
 

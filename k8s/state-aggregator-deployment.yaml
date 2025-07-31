@@ -1,11 +1,13 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: state-aggregator-deployment
+  name: state-aggregator
+  namespace: varcavia-services
   labels:
     app: state-aggregator
+    workload-priority: critical
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: state-aggregator
@@ -13,48 +15,32 @@ spec:
     metadata:
       labels:
         app: state-aggregator
+        workload-priority: critical
     spec:
       containers:
         - name: state-aggregator
-          [cite_start]image: varcavia/state-aggregator:v0.1.0 [cite: 21]
-          imagePullPolicy: IfNotPresent
+          image: ghcr.io/varcavia-inc/state-aggregator:latest
           ports:
-            - containerPort: 50051
-          env:
-            - name: REDIS_ADDR
-              [cite_start]value: "redis-service:6379" [cite: 24]
-          
-          # --- NUOVA SEZIONE: MONTAGGIO DEL VOLUME DNA ---
-          volumeMounts:
-            - name: dna-volume
-              mountPath: /app/dna # I file saranno disponibili qui
-              readOnly: true
-          # -----------------------------------------------
-
-          # 'probes' per la salute del servizio, come da piano
-          # Utilizziamo grpc-health-probe per controlli più accurati
+            - name: grpc
+              containerPort: 50051
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
           livenessProbe:
             exec:
-              command: ["/bin/grpc-health-probe", "-addr=:50051"]
-            initialDelaySeconds: 15
+              command:
+                - /bin/grpc-health-probe
+                - -addr=:50051
+            initialDelaySeconds: 10
             periodSeconds: 20
           readinessProbe:
             exec:
-              command: ["/bin/grpc-health-probe", "-addr=:50051"]
+              command:
+                - /bin/grpc-health-probe
+                - -addr=:50051
             initialDelaySeconds: 5
             periodSeconds: 10
-
-          resources:
-            requests:
-              [cite_start]cpu: "100m" [cite: 26]
-              [cite_start]memory: "64Mi" [cite: 26]
-            limits:
-              cpu: "200m"
-              memory: "128Mi"
-              
-      # --- NUOVA SEZIONE: DEFINIZIONE DEL VOLUME ---
-      volumes:
-        - name: dna-volume
-          configMap:
-            name: varcavia-dna # Nome del ConfigMap che creiamo
-      # -------------------------------------------

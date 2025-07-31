@@ -68,7 +68,7 @@ jobs:
           test/integration/smoke.sh
           docker compose -f test/integration/docker-compose.yaml down -t 0
 
-      # ---------- Push su GHCR (main) ----------
+      # ---------- Login and push on main branch ----------
       - name: Login to GHCR
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: docker/login-action@v3
@@ -87,3 +87,15 @@ jobs:
           tags: |
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      # ---------- Sign container image ----------
+      - name: Install Cosign
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: sigstore/cosign-installer@v3.5.0
+
+      - name: Sign image with Cosign
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+        run: |
+          cosign sign --yes ${{ env.IMAGE_NAME }}:${{ github.sha }}

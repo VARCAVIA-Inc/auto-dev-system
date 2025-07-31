@@ -2,7 +2,7 @@ version: v1
 plugins:
   - plugin: go
     opt: paths=source_relative
-    out: ../services/gen/go                # <— questo è il punto chiave
+    out: ../services/gen/go
   - plugin: go-grpc
     opt: paths=source_relative
     out: ../services/gen/go
