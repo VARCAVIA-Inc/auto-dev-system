@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package varcavia.ceo_service.v1;
+
+option go_package = "varcavia.com/sentient-organism/services/gen/go/ceo_service/v1;ceo_service_v1";
+
+message Objective {
+  string id = 1;
+  string description = 2;
+}
+
+message ProduceObjectivesRequest {}
+
+message ProduceObjectivesResponse {
+  bool success = 1;
+}

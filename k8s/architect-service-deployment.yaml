@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: architect-service
+  namespace: varcavia-services
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: architect-service }
+  template:
+    metadata:
+      labels: { app: architect-service }
+    spec:
+      containers:
+        - name: architect-service
+          image: ghcr.io/varcavia-inc/architect-service:latest
+          env:
+            - name: BOOTSTRAP_SERVERS
+              value: kafka-broker.kafka.svc.cluster.local:9092
+          ports:
+            - name: metrics
+              containerPort: 2112

@@ -1,13 +1,17 @@
-    # schemas/buf.yaml
-    # Definisce la root del nostro modulo Protobuf e le sue dipendenze.
-    version: v1
-    name: buf.build/varcavia/sentient-organism
-    deps:
-      - buf.build/googleapis/googleapis
-    breaking:
-      use:
-        - FILE
-    lint:
-      use:
-        - DEFAULT
-    
+version: v1
+name: buf.build/varcavia/sentient-organism
+
+deps:
+  # Include gli stub Google standard (solo se effettivamente importi *.proto di Google)
+  - buf.build/googleapis/googleapis
+
+  # gRPC-Gateway contiene già i protos interni + plugin swagger
+  - buf.build/grpc-ecosystem/grpc-gateway
+
+breaking:
+  use:
+    - FILE
+
+lint:
+  use:
+    - DEFAULT
