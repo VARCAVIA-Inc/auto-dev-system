@@ -24,3 +24,4 @@ spec:
   entityOperator:
     topicOperator: {}
     userOperator: {}
+YAML          # ← questa riga DEVE essere l’ultima e contenere solo “YAML”
