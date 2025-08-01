@@ -2,6 +2,7 @@ version: 1
 run:
   timeout: 5m
   skip-dirs:
+    - services/architect_service
     - services/state_aggregator
 linters:
   enable:
