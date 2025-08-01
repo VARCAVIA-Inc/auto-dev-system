@@ -1,0 +1,21 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: varcavia-signed-images
+spec:
+  crd:
+    spec:
+      names:
+        kind: VarcaviaSignedImages
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package varcavia
+
+        # Placeholder constraint template per verificare le firme delle immagini.
+        # Per un'implementazione reale va utilizzata la logica cosign.verify.
+        violation[{"msg": msg}] {
+          input.review.kind.kind == "Pod"
+          false
+          msg := "Image signature verification not implemented"
+        }

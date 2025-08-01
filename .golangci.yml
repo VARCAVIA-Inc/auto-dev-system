@@ -1,0 +1,7 @@
+run:
+  timeout: 5m
+  skip-dirs: "services/(architect_service|state_aggregator)"
+linters:
+  enable:
+    - govet
+    - revive

@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package varcavia.architect_service.v1;
+option go_package = "varcavia.com/sentient-organism/services/gen/go/architect_service/v1;architect_service_v1";
+
+import "google/protobuf/struct.proto";
+
+message TechnicalBlueprint {
+  string id                  = 1;
+  string objective_id        = 2;
+  google.protobuf.Struct doc = 3; // JSON generico con i task
+}
+
+message ProduceBlueprintsRequest {}
+message ProduceBlueprintsResponse { bool success = 1; }

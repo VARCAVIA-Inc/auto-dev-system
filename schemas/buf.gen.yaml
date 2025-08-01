@@ -1,8 +1,11 @@
 version: v1
 plugins:
+  # Genera i file .pb.go con import “source_relative”
   - plugin: go
     opt: paths=source_relative
-    out: ../services/gen/go                # <— questo è il punto chiave
+    out: ../services/gen/go
+
+  # Genera gli stub gRPC (.pb.go) con import “source_relative”
   - plugin: go-grpc
     opt: paths=source_relative
     out: ../services/gen/go

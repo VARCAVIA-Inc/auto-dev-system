@@ -1,0 +1,7 @@
+apiVersion: security.istio.io/v1/PeerAuthentication
+metadata:
+  name: default-strict-mtls
+  namespace: varcavia-services
+spec:
+  mtls:
+    mode: STRICT
