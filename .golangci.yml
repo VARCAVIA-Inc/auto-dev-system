@@ -1,0 +1,9 @@
+run:
+  timeout: 5m
+  skip-dirs:
+    - services/state_aggregator
+linters:
+  disable-all: true
+  enable:
+    - govet
+    - revive

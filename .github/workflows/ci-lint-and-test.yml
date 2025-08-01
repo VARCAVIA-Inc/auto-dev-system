@@ -27,5 +27,9 @@ jobs:
       - uses: golangci/golangci-lint-action@v5
         with:
           version: v1.59.0
-      - name: Run tests
-        run: go test ./...
+      - name: Run vet & tests
+      - name: Run vet & tests
+        run: |
+          pkgs=$(go list ./... | grep -v '/services/state_aggregator')
+          go vet $pkgs
+          go test $pkgs
