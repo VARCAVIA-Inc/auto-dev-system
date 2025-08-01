@@ -1,11 +1,11 @@
 name: ci-lint-and-test
 on:
   pull_request:
+    branches: [main]
     paths:
       - '**/*.go'
       - '**/*.proto'
       - 'services/**'
-      - 'Dockerfile'
       - 'Makefile'
   push:
     branches: [main]
@@ -13,23 +13,24 @@ on:
       - '**/*.go'
       - '**/*.proto'
       - 'services/**'
-      - 'Dockerfile'
       - 'Makefile'
 
 jobs:
-  ci-lint-and-test:
+  lint_test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-go@v4
         with:
           go-version: '1.22'
+
       - uses: golangci/golangci-lint-action@v5
         with:
           version: v1.59.0
-      - name: Run vet & tests
+
       - name: Run vet & tests
         run: |
           pkgs=$(go list ./... | grep -v '/services/state_aggregator')
           go vet $pkgs
-          go test $pkgs
+          go test -v $pkgs
